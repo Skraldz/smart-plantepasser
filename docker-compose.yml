@@ -1,0 +1,45 @@
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: plantepasser_db
+    networks:
+      - plantepasser_net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - db_data:/config     
+    ports:
+      - 3306:3306
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    networks:
+      - plantepasser_net
+    restart: unless-stopped
+    ports:
+      - 3005:8080
+
+  backend:
+    build: ./backend
+    container_name: plantepasser_backend
+    networks:
+      - plantepasser_net
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - PLANTEPASSER_DB_PASSWORD=${PLANTEPASSER_DB_PASSWORD}
+    volumes:
+      - ./backend:/backend
+    restart: unless-stopped
+
+networks:
+  plantepasser_net
+volumes:
+  db_data:

@@ -40,6 +40,6 @@ services:
     restart: unless-stopped
 
 networks:
-  plantepasser_net
+  plantepasser_net:
 volumes:
   db_data:

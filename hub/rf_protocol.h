@@ -8,7 +8,7 @@
 
 // Sensor sender denne struct til hub (maks 32 bytes)
 struct SensorPayload {
-  uint8_t  device_id;        // Fast ID for sensormodulet (sæt til 1)
+  uint8_t  sensor_module_id;        // Fast ID for sensormodulet (sæt til 1)
   float    temperature;      // Celsius, fx 21.5
   float    humidity;         // Procent, fx 65.2
   uint16_t lux;              // 0–65535 lux

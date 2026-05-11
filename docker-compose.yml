@@ -35,6 +35,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
       - PLANTEPASSER_DB_PASSWORD=${PLANTEPASSER_DB_PASSWORD}
+    ports:
+      - 8000:8000
     volumes:
       - ./backend:/backend
     restart: unless-stopped

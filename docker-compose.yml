@@ -9,6 +9,9 @@ services:
       - PGID=1000
       - TZ=${TZ}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${PLANTEPASSER_DB_NAME}
+      - MYSQL_USER=${PLANTEPASSER_DB_USER}
+      - MYSQL_PASSWORD=${PLANTEPASSER_DB_PASSWORD}
     volumes:
       - db_data:/config     
     ports:

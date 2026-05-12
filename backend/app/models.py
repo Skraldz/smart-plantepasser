@@ -3,6 +3,10 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, SmallInteg
 from app.database import Base
 from datetime import datetime
 
+# These are the classes that are used to represent the tables in the database
+# Using sqlalchemy allows python and the database to interact with eachother
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)

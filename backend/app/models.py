@@ -1,3 +1,4 @@
+# Library Imports
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, SmallInteger, Float
 from app.database import Base
 from datetime import datetime

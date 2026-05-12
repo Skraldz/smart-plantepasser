@@ -1,7 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware              # Allows cross-origin source sharing - Browsers block requests between different origins by default
+from app.database import Base, engine
+import app.models
+
+
 
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[                                              # Allows requests to come from these IP

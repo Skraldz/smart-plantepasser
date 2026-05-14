@@ -47,11 +47,21 @@ def save_measurement(db: Session, data: MeasurementIn):
 
     for event in data.watering_events:    
         new_watering_event = WateringEvent(
-            plant_id = plant.plant_id,
-            duration_sec = plant.duration_sec
+            plant_id = event.plant_id,
+            duration_sec = event.duration_sec
         )
         db.add(new_watering_event)
     
     db.commit()
     db.refresh(new_measurement)
     return new_measurement
+
+
+# This function gets the measurements from one specific sensor module in a given frame of time
+# It works by subtracting the to and from hours from the actual time of request,
+# Then it returns the measurements in ascending order from start time to finish time. 
+def get_measurements(db: Session, sensor_module_id: int, from_hours: int, to_hours: int):
+    measurement_from = datetime.utcnow() - timedelta(hours=from_hours)
+    measurement_to = datetime.utcnow() - timedelta(hours=to_hours)
+    return db.query(Measurement).filter(Measurement.timestamp >= measurement_from, Measurement.timestamp <= measurement_to).order_by(Measurement.timestamp.asc()).all()
+    

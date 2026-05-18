@@ -1,7 +1,7 @@
 # Library Imports
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models import User, Measurement, SoilReading, WateringEvent
+from app.models import User, Measurement, SoilReading, WateringEvent, Plant
 from app.schemas import MeasurementIn
 
 # This function searches the User table for a user with the typed e-mail
@@ -38,9 +38,17 @@ def save_measurement(db: Session, data: MeasurementIn):
     db.flush()                      # The database is flushed so measurements gets and ID without being committed
 
     for plant in data.plants:
+        db_plant = db.query(Plant).filter(
+            Plant.sensor_module_id == data.sensor_module_id,
+            Plant.plant_idx == plant.plant_id
+        ).first()
+
+        if db_plant is None:
+            continue
+
         new_soil_reading = SoilReading(
             measurement_id = new_measurement.id,
-            plant_id = plant.plant_id,
+            plant_id = db_plant.id,
             soil_moisture = plant.soil_moisture
         )
         db.add(new_soil_reading)

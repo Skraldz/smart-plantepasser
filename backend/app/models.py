@@ -58,3 +58,14 @@ class WateringEvent(Base):
     plant_id = Column(Integer, ForeignKey("plants.id"))
     timestamp = Column(DateTime, default=datetime.utcnow)
     duration_sec = Column(Integer)
+
+class Command(Base):
+    __tablename__ = "commands"
+    id = Column(Integer, primary_key=True)
+    module_id = Column(Integer, ForeignKey("modules.id"))
+    command_type = Column(String(255))
+    plant_idx = Column(Integer)
+    duration_sec = Column(Integer)
+    relay_action = Column(SmallInteger)
+    status = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)

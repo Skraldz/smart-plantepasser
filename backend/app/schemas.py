@@ -38,3 +38,10 @@ class MeasurementIn(BaseModel):
     plants: List[PlantReading] = []
     watering_events: List[WateringEntry] = []
     lamp_on: bool = False
+
+class WaterCommand(BaseModel):
+    plant_idx: int
+    duration_sec: int
+
+class RelayCommand(BaseModel):
+    relay_action: int

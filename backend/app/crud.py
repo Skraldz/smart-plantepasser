@@ -1,8 +1,8 @@
 # Library Imports
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models import User, Measurement, SoilReading, WateringEvent, Plant
-from app.schemas import MeasurementIn
+from app.models import User, Measurement, SoilReading, WateringEvent, Plant, Command
+from app.schemas import MeasurementIn, WaterCommand, RelayCommand
 
 # This function searches the User table for a user with the typed e-mail
 # It either returns the user with a matching e-mail or None if no match was found
@@ -20,6 +20,20 @@ def create_user(db: Session, email: str, hashed_password: str):
     db.refresh(new_user)
     return new_user
 
+def save_command(db: Session, module_id: int, command_type: str, plant_idx: int = None, duration_sec: int = None, relay_action: int = None):
+    new_command = Command(
+        module_id = module_id,
+        command_type = command_type,
+        plant_idx = plant_idx,
+        duration_sec = duration_sec,
+        relay_action = relay_action,
+        status = "pending"
+    )
+
+    db.add(new_command)
+    db.commit()
+    db.refresh(new_command)
+    return new_command
 
 # This function takes MeasurementIn from Schemas.py (the pydantic schemas that act with the API) and uses it as data
 # This data then gets added to the database as a new measurement
@@ -73,3 +87,9 @@ def get_measurements(db: Session, sensor_module_id: int, from_hours: int, to_hou
     measurement_to = datetime.utcnow() - timedelta(hours=to_hours)
     return db.query(Measurement).filter(Measurement.timestamp >= measurement_from, Measurement.timestamp <= measurement_to).order_by(Measurement.timestamp.asc()).all()
     
+def get_pending_commands(db: Session):
+    pending_commands = db.query(Command).filter(Command.status == "pending").all()
+    for command in pending_commands:
+        command.status = "executed"
+    db.commit()
+    return pending_commands

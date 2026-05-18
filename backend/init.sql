@@ -56,3 +56,15 @@ CREATE TABLE IF NOT EXISTS watering_events (
     timestamp DATETIME DEFAULT NOW(),
     duration_sec INT
 );
+
+CREATE TABLE IF NOT EXISTS commands (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    module_id INT NOT NULL,
+    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
+    command_type VARCHAR(255),
+    plant_idx INT,
+    duration_sec INT,
+    relay_action SMALLINT,
+    status VARCHAR(255),
+    created_at DATETIME DEFAULT NOW()
+);

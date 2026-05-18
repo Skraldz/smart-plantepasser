@@ -4,6 +4,7 @@ from app.database import Base, engine
 import app.models
 from app.routes.measurements import router as measurements_router
 from app.routes.auth import router as auth_router
+from app.routes.commands import router as commands_router
 
 
 app = FastAPI()
@@ -12,6 +13,7 @@ Base.metadata.create_all(bind=engine)                            # Tells SQLalch
 
 app.include_router(auth_router)
 app.include_router(measurements_router)
+app.include_router(commands_router)
 
 app.add_middleware(
     CORSMiddleware,

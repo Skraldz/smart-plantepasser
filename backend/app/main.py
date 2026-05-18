@@ -2,12 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware              # Allows cross-origin source sharing - Browsers block requests between different origins by default
 from app.database import Base, engine
 import app.models
-
+from app.routes.measurements import router as measurements_router
+from app.routes.auth import router as auth_router
 
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)                            # Tells SQLalchemy to create all defined tables if they dont exist already
+
+app.include_router(auth_router)
+app.include_router(measurements_router)
 
 app.add_middleware(
     CORSMiddleware,

@@ -11,8 +11,8 @@ DATABASE_URL = os.environ["DATABASE_URL"]           # Gets the database url from
 engine = create_engine(DATABASE_URL, pool_recycle=3600, pool_pre_ping=True)
 
 # Makes a session and binds it to the engine variable, so it can interact with the tables
-# autocommit makes sure that changes wont be saved automatically, but has to be done with db.commit()
-# autoflush makes sure that changes wont be sent to the db before it is ready
+# autocommit=False makes sure that changes wont be saved automatically, but has to be done with db.commit()
+# autoflush=False makes sure that changes wont be sent to the db before it is ready
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 # The main interaction between the database and python.

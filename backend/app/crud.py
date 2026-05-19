@@ -98,3 +98,26 @@ def get_pending_commands(db: Session):
 def get_plants(db: Session, sensor_module_id: int):
     plants = db.query(Plant).filter(Plant.sensor_module_id == sensor_module_id).all()
     return plants
+
+def get_latest_soil_reading(db: Session, plant_idx: int, sensor_module_id: int):
+    db_plant = db.query(Plant).filter(
+        Plant.plant_idx == plant_idx,
+        Plant.sensor_module_id == sensor_module_id
+    ).first()
+    if db_plant is None:
+        return None
+    return db.query(SoilReading).filter(SoilReading.plant_id == db_plant.id).order_by(SoilReading.id.desc()).first()
+
+
+def get_latest_measurement(db: Session, sensor_module_id: int):
+    latest_measurement = db.query(Measurement).filter(Measurement.sensor_module_id == sensor_module_id).order_by(Measurement.id.desc()).first()
+    return latest_measurement
+
+def get_latest_watering(db: Session, plant_idx:int, sensor_module_id:int):
+    db_plant = db.query(Plant).filter(
+        Plant.plant_idx == plant_idx,
+        Plant.sensor_module_id == sensor_module_id
+    ).first()
+    if db_plant is None:
+        return None
+    return db.query(WateringEvent).filter(WateringEvent.plant_id == db_plant.id).order_by(WateringEvent.id.desc()).first()

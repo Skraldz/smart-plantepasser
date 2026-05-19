@@ -93,3 +93,8 @@ def get_pending_commands(db: Session):
         command.status = "executed"
     db.commit()
     return pending_commands
+
+
+def get_plants(db: Session, sensor_module_id: int):
+    plants = db.query(Plant).filter(Plant.sensor_module_id == sensor_module_id).all()
+    return plants

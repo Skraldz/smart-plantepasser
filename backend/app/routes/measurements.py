@@ -1,7 +1,7 @@
 from fastapi import status, APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.crud import save_measurement, get_measurements
+from app.crud import save_measurement, get_measurements, get_plants
 from app.schemas import MeasurementIn
 from app.auth import get_current_user
 from app.models import User
@@ -41,3 +41,12 @@ def show_measurement(
     get_current_user: User = Depends(get_current_user)
 ):
     return get_measurements(db, sensor_module_id=sensor_module_id, from_hours=from_hours, to_hours=to_hours)
+
+
+@router.get("/plants")
+def show_plants_per_sensor(
+    db: Session = Depends(get_db),
+    get_current_user: User = Depends(get_current_user),
+    sensor_module_id: int = 1
+):
+    return get_plants(db, sensor_module_id=sensor_module_id)

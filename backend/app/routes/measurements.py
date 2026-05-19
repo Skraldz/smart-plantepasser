@@ -1,7 +1,7 @@
 from fastapi import status, APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.crud import save_measurement, get_measurements, get_plants
+from app.crud import save_measurement, get_measurements, get_plants, get_latest_measurement, get_latest_soil_reading, get_latest_watering
 from app.schemas import MeasurementIn
 from app.auth import get_current_user
 from app.models import User
@@ -50,3 +50,22 @@ def show_plants_per_sensor(
     sensor_module_id: int = 1
 ):
     return get_plants(db, sensor_module_id=sensor_module_id)
+
+@router.get("/plants/{plant_idx}/status")
+def show_latest_measurement_per_plant(
+    plant_idx: int,
+    db: Session = Depends(get_db),
+    get_current_user: User = Depends(get_current_user),
+    sensor_module_id: int = 1
+):
+    measurement = get_latest_measurement(db, sensor_module_id=sensor_module_id)
+    soil = get_latest_soil_reading(db, plant_idx=plant_idx, sensor_module_id=sensor_module_id)
+    watering = get_latest_watering(db, plant_idx=plant_idx, sensor_module_id=sensor_module_id)
+    return {
+        "soil_moisture": soil.soil_moisture if soil else None,
+        "temperature": measurement.temperature if measurement else None,
+        "humidity": measurement.humidity if measurement else None,
+        "lux": measurement.lux if measurement else None,
+        "lamp_on": measurement.lamp_on if measurement else None,
+        "last_watered": watering.created_at if watering else None
+    }

@@ -1,11 +1,14 @@
-from fastapi import HTTPException, status, APIRouter, Depends
+from fastapi import HTTPException, status, APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import RegisterRequest, LoginRequest, TokenResponse
 from app.crud import get_user_by_email, create_user
 from app.auth import hash_password, create_token, verify_password
+import os
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+DEVICE_SECRET = os.environ["DEVICE_SECRET"]
 
 
 
@@ -14,7 +17,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # If the e-mail is already registered, it will raise a HTTP 400 status code
 # If the e-mail isn't registered, it runs the create_user function, hash the entered password and put it in the User table
 @router.post("/register")
-def register(body: RegisterRequest, db: Session = Depends(get_db)):
+def register(body: RegisterRequest,
+    x_device_secret: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    if x_device_secret != DEVICE_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized product key")
     existing_user = get_user_by_email(db, body.email)
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A user has already been registered with this e-mail.")

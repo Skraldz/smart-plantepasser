@@ -19,7 +19,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[                                              # Allows requests to come from these IP
         "http://localhost:5173",                                 # For local requests during frontend development
-        "https://plantcloud.mandingo.dk",                        # For requests when in production
+        "https://plantcloud.mandingo.dk",
+        "https://plantapi.mandingo.dk",                        # For requests when in production
     ],
     allow_methods=["*"],                                         # Allows all HTTP methods
     allow_headers=["*"],                                         # Allows all headers

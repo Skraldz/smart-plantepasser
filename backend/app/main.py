@@ -5,9 +5,14 @@ import app.models
 from app.routes.measurements import router as measurements_router
 from app.routes.auth import router as auth_router
 from app.routes.commands import router as commands_router
+import os
 
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
-app = FastAPI()
+# This makes sure that the API is only accessible if the ENVIRONMENT variable i the .env file is set to "development"
+app = FastAPI(docs_url="/docs" if ENVIRONMENT == "development" else None,
+    redoc_url=None,
+    openapi_url="/openapi.json" if ENVIRONMENT == "development" else None)
 
 Base.metadata.create_all(bind=engine)                            # Tells SQLalchemy to create all defined tables if they dont exist already
 

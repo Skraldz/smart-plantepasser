@@ -1,29 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useToast } from '../ui/components/ToastProvider';
+import { usePlant } from '../ui/components/PlantProvider';
 
 function DashboardPage() {
-  const [wateringStatus, setWateringStatus] = useState('');
   const [lampStatus, setLampStatus] = useState('On');
-  const [sensorStatus, setSensorStatus] = useState('');
+  const { showToast } = useToast();
+  const { plants } = usePlants();
+
+  useEffect(() => {
+    const wateringTimer = setTimeout(() => {
+      showToast('Automatic watering started for Monstera Deliciosa.', 'info');
+    }, 5000);
+
+    const lampTimer = setTimeout(() => {
+      showToast('Growth lamp turned on automatically.', 'info');
+    }, 9000);
+
+    return () => {
+      clearTimeout(wateringTimer);
+      clearTimeout(lampTimer);
+    };
+  }, [showToast]);
 
   function handleWateringCycle() {
-    setWateringStatus('Starting watering cycle...');
-
-    setTimeout(() => {
-      setWateringStatus('Watering cycle started successfully.');
-    }, 1000);
+    showToast('Watering cycle started.', 'success');
   }
 
   function handleToggleLamp() {
-    setLampStatus((current) => (current === 'On' ? 'Off' : 'On'));
+    setLampStatus((current) => {
+      const nextStatus = current === 'On' ? 'Off' : 'On';
+      showToast(`Growth lamp turned ${nextStatus.toLowerCase()}.`, 'info');
+      return nextStatus;
+    });
   }
 
   function handleRefreshSensors() {
-    setSensorStatus('Refreshing sensor data...');
-
-    setTimeout(() => {
-      setSensorStatus('Sensor data refreshed.');
-    }, 1000);
+    showToast('Sensor data refreshed.', 'success');
   }
 
   return (
@@ -40,7 +53,7 @@ function DashboardPage() {
       <section className="mb-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
           <p className="text-sm text-slate-400">Active Plants</p>
-          <h2 className="mt-3 text-3xl font-bold text-white">12</h2>
+          <h2 className="mt-3 text-3xl font-bold text-white">{plants.length}</h2>
           <p className="mt-2 text-sm text-emerald-400">+2 this week</p>
         </div>
 
@@ -135,10 +148,6 @@ function DashboardPage() {
               Start watering cycle
             </button>
 
-            {wateringStatus && (
-              <p className="text-sm text-emerald-400">{wateringStatus}</p>
-            )}
-
             <button
               onClick={handleToggleLamp}
               className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
@@ -154,10 +163,6 @@ function DashboardPage() {
             >
               Refresh sensor data
             </button>
-
-            {sensorStatus && (
-              <p className="text-sm text-emerald-400">{sensorStatus}</p>
-            )}
           </div>
 
           <div className="mt-8 rounded-2xl border border-white/10 bg-slate-950/60 p-4">

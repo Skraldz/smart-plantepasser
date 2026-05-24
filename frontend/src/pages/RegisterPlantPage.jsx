@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../ui/components/ToastProvider';
 
 function RegisterPlantPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [plantName, setPlantName] = useState('');
   const [species, setSpecies] = useState('');
@@ -19,6 +21,7 @@ function RegisterPlantPage() {
       notes,
     });
 
+    showToast('Plant registered successfully.', 'success');
     navigate('/plants');
   }
 
@@ -43,6 +46,7 @@ function RegisterPlantPage() {
               value={plantName}
               onChange={(e) => setPlantName(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+              required
             />
           </div>
 
@@ -56,6 +60,7 @@ function RegisterPlantPage() {
               value={species}
               onChange={(e) => setSpecies(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+              required
             />
           </div>
 

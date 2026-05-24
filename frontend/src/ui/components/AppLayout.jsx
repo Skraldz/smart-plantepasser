@@ -61,7 +61,7 @@ function AppLayout() {
             <img
               src={electronicslogo}
               alt="Electronics Logo"
-              className="w-40 md:w-48"
+              className="w-30 md:w-38"
             />
             
         </div>

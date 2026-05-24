@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import backgroundImage from '../assets/g1.background.jpg';
 import electronicslogo from '../assets/g1.electronics.hvid.png';
 import { login } from '../api/auth';
@@ -93,6 +93,16 @@ including storing the JWT token and navigating to the dashboard on success, or d
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+        <p className="mt-7 text-center text-sm text-slate-300">
+          No account?{' '}
+          <Link
+            to="/register"
+            className="font-medium text-emerald-400 transition hover:text-emerald-300"
+          >
+            Register here
+          </Link>
+        </p>
+        
       </div>
     </div>
   );

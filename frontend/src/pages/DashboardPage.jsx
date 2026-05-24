@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
-import { usePlant } from '../ui/components/PlantProvider';
+import { usePlants } from '../ui/components/PlantProvider';
 
 function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');

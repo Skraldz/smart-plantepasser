@@ -1,26 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
-import { usePlants } from '../ui/components/PlantProvider';
 
 function RegisterPlantPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { addPlant } = usePlants();
 
-  const [plantName, setPlantName] = useState('');
-  const [species, setSpecies] = useState('');
-  const [location, setLocation] = useState('');
-  const [notes, setNotes] = useState('');
+  const [name, setName] = useState('');
+  const [sensorModuleId, setSensorModuleId] = useState('');
+  const [plantIdx, setPlantIdx] = useState('');
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    addPlant({
-      name: plantName,
-      species,
-      location,
-      notes,
+    console.log({
+      name,
+      sensor_module_id: Number(sensorModuleId),
+      plant_idx: Number(plantIdx),
     });
 
     showToast('Plant registered successfully.', 'success');
@@ -32,7 +28,7 @@ function RegisterPlantPage() {
       <div className="mb-10">
         <h1 className="text-4xl font-bold tracking-tight text-white">Register Plant</h1>
         <p className="mt-2 max-w-2xl text-slate-400">
-          Add a new plant to your dashboard.
+          Add a plant using the fields supported by the current backend model.
         </p>
       </div>
 
@@ -44,23 +40,9 @@ function RegisterPlantPage() {
             </label>
             <input
               type="text"
-              placeholder="e.g. Monstera in kitchen"
-              value={plantName}
-              onChange={(e) => setPlantName(e.target.value)}
-              className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-100">
-              Species
-            </label>
-            <input
-              type="text"
               placeholder="e.g. Monstera Deliciosa"
-              value={species}
-              onChange={(e) => setSpecies(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
               required
             />
@@ -68,27 +50,29 @@ function RegisterPlantPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-100">
-              Location
+              Sensor module ID
             </label>
             <input
-              type="text"
-              placeholder="e.g. Living room"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              type="number"
+              placeholder="e.g. 101"
+              value={sensorModuleId}
+              onChange={(e) => setSensorModuleId(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+              required
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-100">
-              Notes
+              Plant index
             </label>
-            <textarea
-              placeholder="Optional notes about care, placement, or setup"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows="4"
+            <input
+              type="number"
+              placeholder="e.g. 1"
+              value={plantIdx}
+              onChange={(e) => setPlantIdx(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white placeholder-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+              required
             />
           </div>
 

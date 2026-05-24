@@ -1,17 +1,40 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
-import { usePlants } from '../ui/components/PlantProvider';
 
 function PlantsPage() {
   const { showToast } = useToast();
-  const { plants, deletePlant } = usePlants();
+
+  const [plants, setPlants] = useState([
+    {
+      id: 1,
+      sensor_module_id: 101,
+      plant_idx: 1,
+      name: 'Monstera Deliciosa',
+    },
+    {
+      id: 2,
+      sensor_module_id: 101,
+      plant_idx: 2,
+      name: 'Ficus Elastica',
+    },
+    {
+      id: 3,
+      sensor_module_id: 102,
+      plant_idx: 1,
+      name: 'Snake Plant',
+    },
+  ]);
 
   function handleDeletePlant(id, name) {
     const confirmed = window.confirm(`Are you sure you want to delete ${name}?`);
 
     if (!confirmed) return;
 
-    deletePlant(id);
+    setPlants((currentPlants) =>
+      currentPlants.filter((plant) => plant.id !== id)
+    );
+
     showToast(`${name} deleted successfully.`, 'warning');
   }
 
@@ -21,7 +44,7 @@ function PlantsPage() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-white">All Plants</h1>
           <p className="mt-2 max-w-2xl text-slate-400">
-            View the complete list of registered plants and their current status.
+            View registered plants connected to your modules.
           </p>
         </div>
 
@@ -56,25 +79,10 @@ function PlantsPage() {
               </div>
 
               <p className="mt-4 text-sm text-slate-400">
-                Species: {plant.species}
+                Plant index: {plant.plant_idx}
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                Location: {plant.location || 'Unknown'}
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
-                Soil moisture: {plant.moisture}
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
-                Light exposure: {plant.light}
-              </p>
-              <p
-                className={`mt-1 text-sm ${
-                  plant.status === 'Needs attention'
-                    ? 'text-yellow-400'
-                    : 'text-emerald-400'
-                }`}
-              >
-                Status: {plant.status}
+                Sensor module ID: {plant.sensor_module_id}
               </p>
             </div>
           ))}

@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://plantapi.mandingo.dk',
+  baseURL: import.meta.env.VITE_API_URL || '',
 });
 
 // Add a request interceptor to include the JWT token in the Authorization header

@@ -103,35 +103,57 @@ function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          {plants.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-lg font-semibold text-white">Monstera Deliciosa</h3>
-              <p className="mt-2 text-sm text-slate-400">Soil moisture: 72%</p>
-              <p className="mt-1 text-sm text-slate-400">Light exposure: Good</p>
-              <p className="mt-1 text-sm text-emerald-400">Status: Healthy</p>
+              <p className="text-slate-400">No plants registered yet.</p>
             </div>
+          ) : (
+            plants.map((plant) => (
+              <div
+                key={plant.id}
+                className="rounded-2xl border border-white/10 bg-slate-950/60 p-5"
+              >
+                <h3 className="text-lg font-semibold text-white">
+                  {plant.name}
+                </h3>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-lg font-semibold text-white">Ficus Elastica</h3>
-              <p className="mt-2 text-sm text-slate-400">Soil moisture: 59%</p>
-              <p className="mt-1 text-sm text-slate-400">Light exposure: Medium</p>
-              <p className="mt-1 text-sm text-yellow-400">Status: Needs attention</p>
-            </div>
+                <p className="mt-2 text-sm text-slate-400">
+                  Plant index: {plant.plant_idx}
+                </p>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-lg font-semibold text-white">Calathea Orbifolia</h3>
-              <p className="mt-2 text-sm text-slate-400">Soil moisture: 81%</p>
-              <p className="mt-1 text-sm text-slate-400">Humidity: High</p>
-              <p className="mt-1 text-sm text-emerald-400">Status: Healthy</p>
-            </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  Sensor module ID: {plant.sensor_module_id}
+                </p>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-lg font-semibold text-white">Snake Plant</h3>
-              <p className="mt-2 text-sm text-slate-400">Soil moisture: 44%</p>
-              <p className="mt-1 text-sm text-slate-400">Light exposure: Low</p>
-              <p className="mt-1 text-sm text-emerald-400">Status: Stable</p>
-            </div>
-          </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  Soil moisture: {plant.statusData?.soil_moisture ?? 'No data'}%
+                </p>
+
+                <p className="mt-1 text-sm text-slate-400">
+                   Temperature: {plant.statusData?.temperature ?? 'No data'}°C
+                </p>
+
+                <p className="mt-1 text-sm text-slate-400">
+                    Humidity: {plant.statusData?.humidity ?? 'No data'}%
+                </p>
+
+                <p className="mt-1 text-sm text-slate-400">
+                    Lux: {plant.statusData?.lux ?? 'No data'}
+                </p>
+
+                <p className="mt-1 text-sm text-emerald-400">
+                    Lamp:{' '}
+                    {plant.statusData?.lamp_on == null
+                      ? 'No data'
+                      : plant.statusData.lamp_on === 1
+                        ? 'On'
+                        : 'Off'}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">

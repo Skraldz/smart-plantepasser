@@ -1,77 +1,64 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  getPlants,
+  getPlantStatus,
+} from '../../api/plantepasserApi';
 
 const PlantContext = createContext();
 
-const initialPlants = [
-  {
-    id: 1,
-    name: 'Monstera Deliciosa',
-    species: 'Monstera Deliciosa',
-    location: 'Living room',
-    moisture: '72%',
-    light: 'Good',
-    status: 'Healthy',
-  },
-  {
-    id: 2,
-    name: 'Ficus Elastica',
-    species: 'Ficus Elastica',
-    location: 'Office',
-    moisture: '59%',
-    light: 'Medium',
-    status: 'Needs attention',
-  },
-  {
-    id: 3,
-    name: 'Calathea Orbifolia',
-    species: 'Calathea Orbifolia',
-    location: 'Bedroom',
-    moisture: '81%',
-    light: 'High',
-    status: 'Healthy',
-  },
-  {
-    id: 4,
-    name: 'Snake Plant',
-    species: 'Snake Plant',
-    location: 'Hallway',
-    moisture: '44%',
-    light: 'Low',
-    status: 'Stable',
-  },
-  {
-    id: 5,
-    name: 'Peace Lily',
-    species: 'Peace Lily',
-    location: 'Kitchen',
-    moisture: '66%',
-    light: 'Medium',
-    status: 'Healthy',
-  },
-  {
-    id: 6,
-    name: 'Aloe Vera',
-    species: 'Aloe Vera',
-    location: 'Window',
-    moisture: '38%',
-    light: 'High',
-    status: 'Stable',
-  },
-];
-
 export function PlantProvider({ children }) {
-  const [plants, setPlants] = useState(initialPlants);
+  const [plants, setPlants] = useState([]);
+  const [isLoadingPlants, setIsLoadingPlants] = useState(true);
+  const [plantError, setPlantError] = useState('');
+
+  useEffect(() => {
+    async function loadPlants() {
+      try {
+        setIsLoadingPlants(true);
+        setPlantError('');
+
+        const data = await getPlants(1);
+
+        const plantsWithStatus = await Promise.all(
+          data.map(async (plant) => {
+            try {
+              const statusData = await getPlantStatus(
+                plant.plant_idx,
+                plant.sensor_module_id
+              );
+
+              return {
+                ...plant,
+                statusData,
+              };
+            } catch (err) {
+              console.error(
+                `Failed to load status for plant ${plant.name}`,
+                err
+              );
+
+              return {
+                ...plant,
+                statusData: null,
+              };
+            }
+          })
+        );
+
+        setPlants(plantsWithStatus);
+      } catch (err) {
+        console.error(err);
+        setPlantError('Could not load plants.');
+      } finally {
+        setIsLoadingPlants(false);
+      }
+    }
+
+    loadPlants();
+  }, []);
 
   function addPlant(newPlant) {
-    const plantToAdd = {
-      id: Date.now(),
-      moisture: 'New',
-      light: 'Unknown',
-      status: 'Monitoring',
-      ...newPlant,
-    };
-
-    setPlants((currentPlants) => [plantToAdd, ...currentPlants]);
+    setPlants((currentPlants) => [newPlant, ...currentPlants]);
   }
 
   function deletePlant(id) {
@@ -81,7 +68,16 @@ export function PlantProvider({ children }) {
   }
 
   return (
-    <PlantContext.Provider value={{ plants, addPlant, deletePlant }}>
+    <PlantContext.Provider
+      value={{
+        plants,
+        setPlants,
+        addPlant,
+        deletePlant,
+        isLoadingPlants,
+        plantError,
+      }}
+    >
       {children}
     </PlantContext.Provider>
   );

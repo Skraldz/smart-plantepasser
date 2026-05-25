@@ -1,41 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getPlants } from '../api/plantepasserApi';
 import { useToast } from '../ui/components/ToastProvider';
 
 function PlantsPage() {
   const { showToast } = useToast();
 
-  const [plants, setPlants] = useState([
-    {
-      id: 1,
-      sensor_module_id: 101,
-      plant_idx: 1,
-      name: 'Monstera Deliciosa',
-    },
-    {
-      id: 2,
-      sensor_module_id: 101,
-      plant_idx: 2,
-      name: 'Ficus Elastica',
-    },
-    {
-      id: 3,
-      sensor_module_id: 102,
-      plant_idx: 1,
-      name: 'Snake Plant',
-    },
-  ]);
+  const [plants, setPlants] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function loadPlants() {
+      try {
+        setIsLoading(true);
+        setError('');
+
+        const data = await getPlants(1);
+        setPlants(data);
+      } catch (err) {
+        console.error(err);
+        setError('Could not load plants from backend.');
+        showToast('Could not load plants from backend.', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadPlants();
+  }, [showToast]);
 
   function handleDeletePlant(id, name) {
-    const confirmed = window.confirm(`Are you sure you want to delete ${name}?`);
-
-    if (!confirmed) return;
-
-    setPlants((currentPlants) =>
-      currentPlants.filter((plant) => plant.id !== id)
+    showToast(
+      `Delete is not connected to backend yet for ${name}.`,
+      'warning'
     );
-
-    showToast(`${name} deleted successfully.`, 'warning');
   }
 
   return (
@@ -56,11 +55,25 @@ function PlantsPage() {
         </Link>
       </div>
 
-      {plants.length === 0 ? (
+      {isLoading && (
+        <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 text-slate-400">
+          Loading plants...
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-6 text-red-300">
+          {error}
+        </div>
+      )}
+
+      {!isLoading && !error && plants.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 text-slate-400">
           No plants registered yet.
         </div>
-      ) : (
+      )}
+
+      {!isLoading && !error && plants.length > 0 && (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {plants.map((plant) => (
             <div

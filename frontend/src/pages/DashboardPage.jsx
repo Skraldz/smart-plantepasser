@@ -1,43 +1,61 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
 import { usePlants } from '../ui/components/PlantProvider';
+
+import {
+  sendRelayCommand,
+  sendWaterCommand,
+} from '../api/plantepasserApi';
 
 function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');
   const { showToast } = useToast();
   const { plants } = usePlants();
 
-  useEffect(() => {
-    const wateringTimer = setTimeout(() => {
-      showToast('Automatic watering started for Monstera Deliciosa.', 'info');
-    }, 5000);
 
-    const lampTimer = setTimeout(() => {
-      showToast('Growth lamp turned on automatically.', 'info');
-    }, 9000);
+async function handleWateringCycle() {
+  try {
+    if (plants.length === 0) {
+      showToast('No plants available for watering.', 'warning');
+      return;
+    }
 
-    return () => {
-      clearTimeout(wateringTimer);
-      clearTimeout(lampTimer);
-    };
-  }, [showToast]);
+    await sendWaterCommand(plants[0].plant_idx, 5);
 
-  function handleWateringCycle() {
-    showToast('Watering cycle started.', 'success');
+    showToast('Watering command sent successfully.', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to send watering command.', 'error');
   }
+}
 
-  function handleToggleLamp() {
-    setLampStatus((current) => {
-      const nextStatus = current === 'On' ? 'Off' : 'On';
-      showToast(`Growth lamp turned ${nextStatus.toLowerCase()}.`, 'info');
-      return nextStatus;
-    });
-  }
 
-  function handleRefreshSensors() {
-    showToast('Sensor data refreshed.', 'success');
+async function handleToggleLamp() {
+  try {
+    const nextRelayAction = lampStatus === 'On' ? 0 : 1;
+
+    await sendRelayCommand(nextRelayAction);
+
+    const nextStatus = nextRelayAction === 1 ? 'On' : 'Off';
+
+    setLampStatus(nextStatus);
+
+    showToast(
+      `Growth lamp turned ${nextStatus.toLowerCase()}.`,
+      'success'
+    );
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to toggle growth lamp.', 'error');
   }
+}
+
+function handleRefreshSensors() {
+  window.location.reload();
+
+  showToast('Refreshing sensor data...', 'info');
+}
 
   return (
     <div>

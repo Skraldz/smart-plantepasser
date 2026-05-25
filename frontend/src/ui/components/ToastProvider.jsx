@@ -31,7 +31,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
 
-      <div className="pointer-events-none fixed right-6 top-6 z-50 flex flex-col gap-3">
+      <div className="pointer-events-none fixed right-50 top-15 z-50 flex flex-col gap-3">
         <Toast
           message={toast.message}
           type={toast.type}

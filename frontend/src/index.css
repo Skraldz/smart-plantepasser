@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Define root-level styles for the application, including font, text color, and background color */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #e5e7eb;
+  background-color: #0f172a;
+}
+
+/* Reset default margins and set a minimum size for the body */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+/* Apply box-sizing to all elements for easier layout management */
+* {
+  box-sizing: border-box;
+}

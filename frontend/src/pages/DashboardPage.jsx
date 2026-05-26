@@ -3,10 +3,16 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
 import { usePlants } from '../ui/components/PlantProvider';
 
+// refactoring
+import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard';
+import QuickActions from '../ui/components/dashboard/QuickActions';
+
 import {
   sendRelayCommand,
   sendWaterCommand,
 } from '../api/plantepasserApi';
+
+
 
 function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');
@@ -139,90 +145,18 @@ async function handleRefreshSensors() {
             </div>
           ) : (
             plants.map((plant) => (
-              <div
-                key={plant.id}
-                className="rounded-2xl border border-white/10 bg-slate-950/60 p-5"
-              >
-                <h3 className="text-lg font-semibold text-white">
-                  {plant.name}
-                </h3>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  Plant index: {plant.plant_idx}
-                </p>
-
-                <p className="mt-1 text-sm text-slate-400">
-                  Sensor module ID: {plant.sensor_module_id}
-                </p>
-
-                <p className="mt-1 text-sm text-slate-400">
-                  Soil moisture: {plant.statusData?.soil_moisture ?? 'No data'}%
-                </p>
-
-                <p className="mt-1 text-sm text-slate-400">
-                   Temperature: {plant.statusData?.temperature ?? 'No data'}°C
-                </p>
-
-                <p className="mt-1 text-sm text-slate-400">
-                    Humidity: {plant.statusData?.humidity ?? 'No data'}%
-                </p>
-
-                <p className="mt-1 text-sm text-slate-400">
-                    Lux: {plant.statusData?.lux ?? 'No data'}
-                </p>
-
-                <p className="mt-1 text-sm text-emerald-400">
-                    Lamp:{' '}
-                    {plant.statusData?.lamp_on == null
-                      ? 'No data'
-                      : plant.statusData.lamp_on === 1
-                        ? 'On'
-                        : 'Off'}
-                </p>
-              </div>
+              <PlantStatusCard key={plant.id} plant={plant} />
             ))
           )}
         </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold text-white">Quick Actions</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Manual controls and shortcuts.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <button
-              onClick={handleWateringCycle}
-              className="w-full rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
-            >
-              Start watering cycle
-            </button>
-
-            <button
-              onClick={handleToggleLamp}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
-            >
-              Toggle growth lamp
-            </button>
-
-            <p className="text-sm text-slate-400">Lamp is currently {lampStatus}.</p>
-
-            <button
-              onClick={handleRefreshSensors}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
-            >
-              Refresh sensor data
-            </button>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-            <h3 className="text-lg font-semibold text-white">System Notice</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              All systems are operational. No critical alerts detected.
-            </p>
-          </div>
-        </div>
+        <QuickActions
+          lampStatus={lampStatus}
+          onWateringCycle={handleWateringCycle}
+          onToggleLamp={handleToggleLamp}
+          onRefreshSensors={handleRefreshSensors}
+        />
       </section>
     </div>
   );

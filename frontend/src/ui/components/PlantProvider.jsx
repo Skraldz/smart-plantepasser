@@ -11,50 +11,47 @@ export function PlantProvider({ children }) {
   const [isLoadingPlants, setIsLoadingPlants] = useState(true);
   const [plantError, setPlantError] = useState('');
 
-  useEffect(() => {
-    async function loadPlants() {
-      try {
-        setIsLoadingPlants(true);
-        setPlantError('');
+  async function refreshPlants() {
+    try {
+      setIsLoadingPlants(true);
+      setPlantError('');
 
-        const data = await getPlants(1);
+      const data = await getPlants(1);
 
-        const plantsWithStatus = await Promise.all(
-          data.map(async (plant) => {
-            try {
-              const statusData = await getPlantStatus(
-                plant.plant_idx,
-                plant.sensor_module_id
-              );
+      const plantsWithStatus = await Promise.all(
+        data.map(async (plant) => {
+          try {
+            const statusData = await getPlantStatus(
+              plant.plant_idx,
+              plant.sensor_module_id
+            );
 
-              return {
-                ...plant,
-                statusData,
-              };
-            } catch (err) {
-              console.error(
-                `Failed to load status for plant ${plant.name}`,
-                err
-              );
+            return {
+              ...plant,
+              statusData,
+            };
+          } catch (err) {
+            console.error(`Failed to load status for plant ${plant.name}`, err);
 
-              return {
-                ...plant,
-                statusData: null,
-              };
-            }
-          })
-        );
+            return {
+              ...plant,
+              statusData: null,
+            };
+          }
+        })
+      );
 
-        setPlants(plantsWithStatus);
-      } catch (err) {
-        console.error(err);
-        setPlantError('Could not load plants.');
-      } finally {
-        setIsLoadingPlants(false);
-      }
+      setPlants(plantsWithStatus);
+    } catch (err) {
+      console.error(err);
+      setPlantError('Could not load plants.');
+    } finally {
+      setIsLoadingPlants(false);
     }
+  }
 
-    loadPlants();
+  useEffect(() => {
+    refreshPlants();
   }, []);
 
   function addPlant(newPlant) {
@@ -74,6 +71,7 @@ export function PlantProvider({ children }) {
         setPlants,
         addPlant,
         deletePlant,
+        refreshPlants,
         isLoadingPlants,
         plantError,
       }}

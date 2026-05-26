@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
 import { usePlants } from '../ui/components/PlantProvider';
@@ -11,8 +11,15 @@ import {
 function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');
   const { showToast } = useToast();
-  const { plants } = usePlants();
+  const { plants, refreshPlants } = usePlants();
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshPlants();
+    }, 1800000);
+
+    return () => clearInterval(interval);
+  }, [refreshPlants]);
 
 async function handleWateringCycle() {
   try {
@@ -51,10 +58,14 @@ async function handleToggleLamp() {
   }
 }
 
-function handleRefreshSensors() {
-  window.location.reload();
-
-  showToast('Refreshing sensor data...', 'info');
+async function handleRefreshSensors() {
+  try {
+    await refreshPlants();
+    showToast('Sensor data refreshed.', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to refresh sensor data.', 'error');
+  }
 }
 
   return (

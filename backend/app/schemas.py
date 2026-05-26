@@ -75,9 +75,9 @@ class LightSettingsUpdate(BaseModel):
 
 class PlantSettings(BaseModel):
     plant_idx: int
-    soil_threshold: int
-    pump_pwm: int
-    watering_duration_sec: int
+    soil_threshold: Optional[int] = 30
+    pump_pwm: Optional[int] = 100
+    watering_duration_sec: Optional[int] = 5
     
 class LightSettingsResponse(BaseModel):
     lux_threshold_low: int

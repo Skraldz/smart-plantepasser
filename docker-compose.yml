@@ -44,6 +44,18 @@ services:
       - ./backend:/backend
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: https://plantapi.mandingo.dk
+    container_name: plantepasser_frontend
+    restart: unless-stopped
+    networks:
+      - plantepasser_net
+    ports:
+      - "8080:80"
+
 networks:
   plantepasser_net:
 volumes:

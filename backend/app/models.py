@@ -39,6 +39,8 @@ class Plant(Base):
     note = Column(String(255))
     soil_threshold = Column(Integer)
     pump_pwm = Column(Integer)
+    watering_duration_sec = Column(Integer)
+    
 class Measurement(Base):
     __tablename__ = "measurements"
     id = Column(Integer, primary_key=True)

@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS plants (
     location VARCHAR(255),
     soil_threshold INT DEFAULT 30,
     pump_pwm INT DEFAULT 100,
-    note VARCHAR(255)
-    watering_duraction_sec INT DEFAULT 5
+    note VARCHAR(255),
+    watering_duration_sec INT DEFAULT 5
 );
 
 CREATE TABLE IF NOT EXISTS measurements (

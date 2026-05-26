@@ -123,6 +123,12 @@ def get_latest_watering(db: Session, plant_idx:int, sensor_module_id:int):
     return db.query(WateringEvent).filter(WateringEvent.plant_id == db_plant.id).order_by(WateringEvent.id.desc()).first()
 
 def create_plant(db: Session, sensor_module_id: int, data: PlantCreate):
+    existing_idx = db.query(Plant).filter(
+        Plant.plant_idx == data.plant_idx,
+        Plant.sensor_module_id == sensor_module_id,
+    ).first()
+    if existing_idx:
+        return None
     new_plant = Plant(
         sensor_module_id = sensor_module_id,
         plant_idx = data.plant_idx,

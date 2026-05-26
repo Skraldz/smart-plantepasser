@@ -19,6 +19,8 @@ def create_plant_command(
     sensor_module_id: int = 1
 ):
     incoming_create_plant = create_plant(db, sensor_module_id, body)
+    if incoming_create_plant is None:
+        raise HTTPException(status_code=409, detail="A plant with this plant_idx already exists")
     return {"status": "ok", "plant_id": incoming_create_plant.id}
 
 @router.put("/plants/{plant_idx}")

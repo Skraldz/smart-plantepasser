@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from app.models import User, Measurement, SoilReading, WateringEvent, Plant, Command, LightSettings
-from app.schemas import MeasurementIn, WaterCommand, RelayCommand, PlantUpdate, PlantCreate, PlantSettings, LightSettingsResponse, SettingsResponse
+from app.schemas import MeasurementIn, WaterCommand, RelayCommand, PlantUpdate, PlantCreate, PlantSettings, LightSettingsResponse, SettingsResponse, LightSettingsUpdate
 
 # This function searches the User table for a user with the typed e-mail
 # It either returns the user with a matching e-mail or None if no match was found
@@ -198,3 +198,20 @@ def get_settings(db: Session, sensor_module_id: int):
 
     return SettingsResponse(plants=plant_settings, light=light_response)
 
+def update_light_settings(db: Session, sensor_module_id: int, data: LightSettingsUpdate):
+    light = db.query(LightSettings).filter(LightSettings.module_id == sensor_module_id).first()
+    if light is None:
+        return None
+    if data.lux_threshold_low is not None:
+        light.lux_threshold_low = data.lux_threshold_low
+    if data.lux_threshold_high is not None:
+        light.lux_threshold_high = data.lux_threshold_high
+    if data.light_period is not None:
+        light.light_period = data.light_period
+    if data.light_start_hour is not None:
+        light.light_start_hour = data.light_start_hour
+    if data.enabled is not None:
+        light.enabled = data.enabled
+    db.commit()
+    db.refresh(light)
+    return light

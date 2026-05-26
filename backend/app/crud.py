@@ -1,8 +1,8 @@
 # Library Imports
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models import User, Measurement, SoilReading, WateringEvent, Plant, Command
-from app.schemas import MeasurementIn, WaterCommand, RelayCommand
+from app.models import User, Measurement, SoilReading, WateringEvent, Plant, Command, LightSettings
+from app.schemas import MeasurementIn, WaterCommand, RelayCommand, PlantUpdate, PlantCreate, PlantSettings, LightSettingsResponse, SettingsResponse
 
 # This function searches the User table for a user with the typed e-mail
 # It either returns the user with a matching e-mail or None if no match was found
@@ -121,3 +121,80 @@ def get_latest_watering(db: Session, plant_idx:int, sensor_module_id:int):
     if db_plant is None:
         return None
     return db.query(WateringEvent).filter(WateringEvent.plant_id == db_plant.id).order_by(WateringEvent.id.desc()).first()
+
+def create_plant(db: Session, sensor_module_id: int, data: PlantCreate):
+    new_plant = Plant(
+        sensor_module_id = sensor_module_id,
+        plant_idx = data.plant_idx,
+        name = data.name,
+        type = data.type,
+        location = data.location,
+        note = data.note,
+        soil_threshold = data.soil_threshold,
+        pump_pwm = data.pump_pwm,
+        watering_duration_sec = data.watering_duration_sec
+    )
+    db.add(new_plant)
+    db.commit()
+    db.refresh(new_plant)
+    return new_plant
+
+def update_plant(db: Session, plant_idx: int, sensor_module_id: int, data: PlantUpdate):
+    plant = db.query(Plant).filter(
+        Plant.plant_idx == plant_idx,
+        Plant.sensor_module_id == sensor_module_id
+    ).first()
+    if plant is None:
+        return None
+    if data.name is not None:
+        plant.name = data.name
+    if data.type is not None:
+        plant.type = data.type
+    if data.location is not None:
+        plant.location = data.location
+    if data.note is not None:
+        plant.note = data.note
+    if data.soil_threshold is not None:
+        plant.soil_threshold = data.soil_threshold
+    if data.pump_pwm is not None:
+        plant.pump_pwm = data.pump_pwm
+    if data.watering_duration_sec is not None:
+        plant.watering_duration_sec = data.watering_duration_sec
+    db.commit()
+    db.refresh(plant)
+    return plant
+
+def delete_plant(db: Session, plant_idx: int, sensor_module_id: int):
+    plant = db.query(Plant).filter(
+        Plant.plant_idx == plant_idx,
+        Plant.sensor_module_id == sensor_module_id
+    ).first()
+    if plant is None:
+        return None
+    db.delete(plant)
+    db.commit()
+    return {"status": "ok"}
+
+def get_settings(db: Session, sensor_module_id: int):
+    plants = get_plants(db, sensor_module_id)
+    light = db.query(LightSettings).filter(LightSettings.module_id == sensor_module_id).first()
+    if light is None:
+        return None
+    plant_settings = [
+        PlantSettings(
+            plant_idx=p.plant_idx,
+            soil_threshold=p.soil_threshold,
+            pump_pwm=p.pump_pwm,
+            watering_duration_sec=p.watering_duration_sec
+        ) for p in plants
+    ]
+    light_response = LightSettingsResponse(
+        lux_threshold_low=light.lux_threshold_low,
+        lux_threshold_high=light.lux_threshold_high,
+        light_period=light.light_period,
+        light_start_hour=light.light_start_hour,
+        enabled=light.enabled
+    )
+
+    return SettingsResponse(plants=plant_settings, light=light_response)
+

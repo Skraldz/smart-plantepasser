@@ -26,7 +26,13 @@ CREATE TABLE IF NOT EXISTS plants (
     sensor_module_id INT NOT NULL,
     FOREIGN KEY (sensor_module_id) REFERENCES modules(id) ON DELETE CASCADE,
     plant_idx INT,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    type VARCHAR(255),
+    location VARCHAR(255),
+    soil_threshold INT DEFAULT 30,
+    pump_pwm INT DEFAULT 100,
+    note VARCHAR(255)
+    watering_duraction_sec INT DEFAULT 5
 );
 
 CREATE TABLE IF NOT EXISTS measurements (
@@ -68,3 +74,4 @@ CREATE TABLE IF NOT EXISTS commands (
     status VARCHAR(255),
     created_at DATETIME DEFAULT NOW()
 );
+

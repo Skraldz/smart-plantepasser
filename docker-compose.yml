@@ -23,14 +23,6 @@ services:
       timeout: 5s
       retries: 10
 
-  adminer:
-    image: adminer:latest
-    networks:
-      - plantepasser_net
-    restart: unless-stopped
-    ports:
-      - 3005:8080
-
   backend:
     build: ./backend
     container_name: plantepasser_backend

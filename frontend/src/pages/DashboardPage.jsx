@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
 import { usePlants } from '../ui/components/PlantProvider';
 
-// refactoring
 import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard';
 import QuickActions from '../ui/components/dashboard/QuickActions';
+import MoistureChart from '../ui/components/dashboard/MoistureChart';
 
 import {
+  getMeasurements,
   sendRelayCommand,
   sendWaterCommand,
 } from '../api/plantepasserApi';
@@ -18,6 +19,7 @@ function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');
   const { showToast } = useToast();
   const { plants, refreshPlants } = usePlants();
+  const [moistureHistory, setMoistureHistory] = useState([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -26,6 +28,38 @@ function DashboardPage() {
 
     return () => clearInterval(interval);
   }, [refreshPlants]);
+
+  useEffect(() => {
+    async function loadMeasurements() {
+     try {
+      const measurements = await getMeasurements(1, 24, 0);
+
+      console.log(measurements);
+
+      const chartData = measurements.map((measurement) => {
+        const row = {
+          time: new Date(measurement.timestamp).toLocaleTimeString('da-DK', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        };
+
+        measurement.soil_readings.forEach((reading) => {
+          row[`plant${reading.plant_idx}`] = reading.soil_moisture;
+        });
+
+        return row;
+      });
+
+      setMoistureHistory(chartData);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not load measurement history.', 'error');
+    }
+  }
+
+  loadMeasurements();
+}, [showToast]);
 
 async function handleWateringCycle() {
   try {
@@ -148,7 +182,7 @@ async function handleRefreshSensors() {
               <PlantStatusCard key={plant.id} plant={plant} />
             ))
           )}
-        </div>
+          </div>
         </div>
 
         <QuickActions
@@ -157,6 +191,9 @@ async function handleRefreshSensors() {
           onToggleLamp={handleToggleLamp}
           onRefreshSensors={handleRefreshSensors}
         />
+      </section>
+      <section className="mt-6">
+        <MoistureChart data={moistureHistory} />
       </section>
     </div>
   );

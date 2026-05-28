@@ -67,5 +67,5 @@ def show_latest_measurement_per_plant(
         "humidity": measurement.humidity if measurement else None,
         "lux": measurement.lux if measurement else None,
         "lamp_on": measurement.lamp_on if measurement else None,
-        "last_watered": watering.created_at if watering else None
+        "last_watered": watering.timestamp if watering else None
     }

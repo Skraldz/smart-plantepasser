@@ -1,0 +1,18 @@
+#pragma once
+
+#define WIFI_SSID "Airties_Air4960R_3D8F"
+#define WIFI_PASSWORD "kyhckm4388"
+
+#define BACKEND_HEALTH_URL "https://plantapi.mandingo.dk/"
+#define BACKEND_URL "https://plantapi.mandingo.dk/api/v1/measurements"
+#define COMMANDS_URL "https://plantapi.mandingo.dk/api/v1/commands/pending"
+
+#define DEVICE_SECRET "spis_mere_ost"
+
+#define SD_CS_PIN 15
+
+#define SOIL_DRY_THRESHOLD 30
+#define LUX_LOW_THRESHOLD 200
+#define LIGHT_PERIOD_START 8
+#define LIGHT_PERIOD_END 16
+#define WATERING_DURATION 5

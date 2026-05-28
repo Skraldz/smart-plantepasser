@@ -65,7 +65,7 @@ def update_light_settings_command(
     body: LightSettingsUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    sensor_module_id: int = 1
+    sensor_module_id: int = 3
 ):
     incoming_light_update = update_light_settings(db, sensor_module_id, body)
     if incoming_light_update is None:

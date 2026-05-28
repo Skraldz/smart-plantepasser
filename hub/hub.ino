@@ -4,16 +4,22 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <RF24.h>
+#include <SD.h>
+#include <time.h>
 
 #include "config.h"
 #include "rf_protocol.h"
 
-// NRF24L01 pins på ESP32
-// CE = GPIO 4, CSN = GPIO 5
-RF24 radio(4, 5);
+RF24 radio(4, 5); // CE=4, CSN=5
 
+unsigned long lastSensorPoll = 0;
 unsigned long lastCommandPoll = 0;
-const unsigned long COMMAND_POLL_INTERVAL = 10000; // 10 sekunder
+
+const unsigned long SENSOR_POLL_INTERVAL = 60000;
+const unsigned long COMMAND_POLL_INTERVAL = 10000;
+
+bool sdReady = false;
+bool relayCurrentlyOn = false;
 
 void connectWiFi() {
   Serial.print("Forbinder til WiFi");
@@ -31,6 +37,65 @@ void connectWiFi() {
   Serial.println(WiFi.localIP());
 }
 
+void setupTime() {
+  Serial.println("Synkroniserer tid med NTP...");
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+  struct tm timeinfo;
+  int attempts = 0;
+
+  while (!getLocalTime(&timeinfo) && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  Serial.println();
+
+  if (attempts >= 20) {
+    Serial.println("Kunne ikke hente NTP-tid endnu");
+  } else {
+    Serial.println("NTP-tid klar");
+  }
+}
+
+String getISOTimestamp() {
+  struct tm timeinfo;
+
+  if (!getLocalTime(&timeinfo)) {
+    return "1970-01-01T00:00:00Z";
+  }
+
+  char buffer[25];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+
+  return String(buffer);
+}
+
+bool isLightPeriod() {
+  struct tm timeinfo;
+
+  if (!getLocalTime(&timeinfo)) {
+    return true; // fallback: tillad relay-test hvis tid ikke er klar
+  }
+
+  int hour = timeinfo.tm_hour;
+  return hour >= LIGHT_PERIOD_START && hour < LIGHT_PERIOD_END;
+}
+
+void setupSD() {
+  Serial.println("Starter SD-kort...");
+
+  if (!SD.begin(SD_CS_PIN)) {
+    Serial.println("FEJL: SD-kort blev ikke fundet");
+    sdReady = false;
+    return;
+  }
+
+  sdReady = true;
+  Serial.println("SD-kort klar");
+}
+
 void setupRF() {
   Serial.println("Starter NRF24L01...");
 
@@ -42,24 +107,18 @@ void setupRF() {
   radio.setChannel(RF_CHANNEL);
   radio.setPALevel(RF24_PA_LOW);
   radio.setDataRate(RF24_1MBPS);
+  radio.setRetries(5, 15);
 
-  // Hub lytter efter sensorens data
   radio.openReadingPipe(1, SENSOR_ADDR);
   radio.startListening();
 
-  Serial.println("NRF24L01 klar - lytter efter SensorPayload");
+  Serial.println("NRF24L01 klar");
 }
 
-String getISOTimestamp() {
-  // Midlertidig fast timestamp.
-  // Senere skifter vi til NTP-tid.
-  return "2026-05-21T10:00:00Z";
-}
-
-void sendMeasurement(SensorPayload payload) {
+bool sendJsonToBackend(String body) {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi ikke forbundet - kan ikke sende measurement");
-    return;
+    Serial.println("WiFi offline - kan ikke sende til backend");
+    return false;
   }
 
   WiFiClientSecure client;
@@ -70,32 +129,6 @@ void sendMeasurement(SensorPayload payload) {
 
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-Device-Secret", DEVICE_SECRET);
-
-  StaticJsonDocument<512> doc;
-
-  // RF bruger device_id, backend forventer sensor_module_id
-  doc["sensor_module_id"] = payload.device_id;
-  doc["timestamp"] = getISOTimestamp();
-  doc["temperature"] = payload.temperature;
-  doc["humidity"] = payload.humidity;
-  doc["lux"] = payload.lux;
-  doc["lamp_on"] = false;
-
-  JsonArray plants = doc.createNestedArray("plants");
-
-  for (int i = 0; i < 4; i++) {
-    JsonObject plant = plants.createNestedObject();
-    plant["plant_id"] = i;
-    plant["soil_moisture"] = payload.soil[i];
-  }
-
-  doc.createNestedArray("watering_events");
-
-  String body;
-  serializeJson(doc, body);
-
-  Serial.println("Sender measurement JSON:");
-  Serial.println(body);
 
   int responseCode = http.POST(body);
 
@@ -111,12 +144,129 @@ void sendMeasurement(SensorPayload payload) {
   }
 
   http.end();
+
+  return responseCode == 200 || responseCode == 201;
+}
+
+void saveLastMeasurement(String body) {
+  if (!sdReady) return;
+
+  if (SD.exists("/last_measurement.json")) {
+    SD.remove("/last_measurement.json");
+  }
+
+  File file = SD.open("/last_measurement.json", FILE_WRITE);
+
+  if (!file) {
+    Serial.println("Kunne ikke gemme sidste måling på SD");
+    return;
+  }
+
+  file.println(body);
+  file.close();
+
+  Serial.println("Sidste måling gemt på SD");
+}
+
+void addToRetryQueue(String body) {
+  if (!sdReady) return;
+
+  File file = SD.open("/retry_queue.txt", FILE_APPEND);
+
+  if (!file) {
+    Serial.println("Kunne ikke skrive til retry-kø");
+    return;
+  }
+
+  file.println(body);
+  file.close();
+
+  Serial.println("Måling gemt i retry-kø");
+}
+
+void processRetryQueue() {
+  if (!sdReady) return;
+  if (WiFi.status() != WL_CONNECTED) return;
+  if (!SD.exists("/retry_queue.txt")) return;
+
+  File input = SD.open("/retry_queue.txt", FILE_READ);
+  File temp = SD.open("/retry_temp.txt", FILE_WRITE);
+
+  if (!input || !temp) {
+    Serial.println("Kunne ikke åbne retry-kø");
+    return;
+  }
+
+  Serial.println("Behandler retry-kø...");
+
+  while (input.available()) {
+    String line = input.readStringUntil('\n');
+    line.trim();
+
+    if (line.length() == 0) continue;
+
+    bool sent = sendJsonToBackend(line);
+
+    if (!sent) {
+      temp.println(line);
+    } else {
+      Serial.println("Cached måling sendt");
+    }
+
+    delay(300);
+  }
+
+  input.close();
+  temp.close();
+
+  SD.remove("/retry_queue.txt");
+  SD.rename("/retry_temp.txt", "/retry_queue.txt");
+}
+
+String buildMeasurementJson(SensorPayload payload) {
+  StaticJsonDocument<512> doc;
+
+  doc["sensor_module_id"] = payload.sensor_module_id;
+  doc["timestamp"] = getISOTimestamp();
+  doc["temperature"] = payload.temperature;
+  doc["humidity"] = payload.humidity;
+  doc["lux"] = payload.lux;
+  doc["lamp_on"] = relayCurrentlyOn;
+
+  JsonArray plants = doc.createNestedArray("plants");
+
+  for (int i = 0; i < 4; i++) {
+    JsonObject plant = plants.createNestedObject();
+    plant["plant_id"] = i;
+    plant["soil_moisture"] = payload.soil[i];
+  }
+
+  doc.createNestedArray("watering_events");
+
+  String body;
+  serializeJson(doc, body);
+  return body;
+}
+
+void sendMeasurement(SensorPayload payload) {
+  String body = buildMeasurementJson(payload);
+
+  Serial.println("Measurement JSON:");
+  Serial.println(body);
+
+  saveLastMeasurement(body);
+
+  bool sent = sendJsonToBackend(body);
+
+  if (!sent) {
+    addToRetryQueue(body);
+  }
 }
 
 void sendWateringCommand(uint8_t plantId, uint8_t durationSec) {
   WateringCommand cmd;
   cmd.plant_id = plantId;
-  cmd.action = 1; // 1 = start
+  cmd.action = 1;
   cmd.duration_sec = durationSec;
 
   radio.stopListening();
@@ -127,7 +277,8 @@ void sendWateringCommand(uint8_t plantId, uint8_t durationSec) {
   radio.startListening();
 
   if (ok) {
-    Serial.println("WateringCommand sendt via RF");
+    Serial.print("WateringCommand sendt til plante ");
+    Serial.println(plantId);
   } else {
     Serial.println("FEJL: WateringCommand blev ikke sendt");
   }
@@ -135,8 +286,8 @@ void sendWateringCommand(uint8_t plantId, uint8_t durationSec) {
 
 void sendRelayCommand(uint8_t action) {
   RelayCommand cmd;
-  cmd.action = action;       // 0 = sluk, 1 = tænd
-  cmd.duration_min = 0;      // 0 = manuelt
+  cmd.action = action;
+  cmd.duration_min = 0;
 
   radio.stopListening();
   radio.openWritingPipe(RELAY_ADDR);
@@ -146,15 +297,102 @@ void sendRelayCommand(uint8_t action) {
   radio.startListening();
 
   if (ok) {
-    Serial.println("RelayCommand sendt via RF");
+    relayCurrentlyOn = action == 1;
+    Serial.print("RelayCommand sendt. Action: ");
+    Serial.println(action);
   } else {
     Serial.println("FEJL: RelayCommand blev ikke sendt");
   }
 }
 
+void handleThresholds(SensorPayload payload) {
+  for (int i = 0; i < 4; i++) {
+    if (payload.soil[i] < SOIL_DRY_THRESHOLD) {
+      Serial.print("Threshold: tør jord ved plante ");
+      Serial.println(i);
+
+      sendWateringCommand((uint8_t)i, WATERING_DURATION);
+    }
+  }
+
+  if (payload.lux < LUX_LOW_THRESHOLD && isLightPeriod()) {
+    if (!relayCurrentlyOn) {
+      Serial.println("Threshold: lav lux - tænder lampe");
+      sendRelayCommand(1);
+    }
+  }
+
+  if (payload.lux >= LUX_LOW_THRESHOLD && relayCurrentlyOn) {
+    Serial.println("Threshold: lux OK - slukker lampe");
+    sendRelayCommand(0);
+  }
+}
+
+void pollSensor() {
+  PollRequest req;
+  req.sensor_module_id = 1;
+
+  Serial.println("Sender PollRequest til sensor...");
+
+  radio.stopListening();
+  radio.openWritingPipe(POLL_ADDR);
+
+  bool sent = radio.write(&req, sizeof(req));
+
+  if (!sent) {
+    Serial.println("FEJL: PollRequest blev ikke sendt");
+    radio.startListening();
+    return;
+  }
+
+  Serial.println("PollRequest sendt - venter på SensorPayload");
+
+  radio.openReadingPipe(1, SENSOR_ADDR);
+  radio.startListening();
+
+  unsigned long started = millis();
+
+  while (!radio.available() && millis() - started < 2000) {
+    delay(5);
+  }
+
+  if (radio.available()) {
+    SensorPayload payload;
+    radio.read(&payload, sizeof(payload));
+
+    Serial.println("SensorPayload modtaget efter poll");
+
+    Serial.print("Sensor module ID: ");
+    Serial.println(payload.sensor_module_id);
+
+    Serial.print("Temp: ");
+    Serial.println(payload.temperature);
+
+    Serial.print("Humidity: ");
+    Serial.println(payload.humidity);
+
+    Serial.print("Lux: ");
+    Serial.println(payload.lux);
+
+    for (int i = 0; i < 4; i++) {
+      Serial.print("Soil[");
+      Serial.print(i);
+      Serial.print("]: ");
+      Serial.println(payload.soil[i]);
+    }
+
+    handleThresholds(payload);
+    sendMeasurement(payload);
+    processRetryQueue();
+
+  } else {
+    Serial.println("Ingen SensorPayload modtaget efter poll");
+  }
+}
+
 void getPendingCommands() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi ikke forbundet - kan ikke hente commands");
+    Serial.println("WiFi offline - kan ikke hente commands");
     return;
   }
 
@@ -234,34 +472,22 @@ void getPendingCommands() {
   http.end();
 }
 
-void checkRF() {
-  if (radio.available()) {
-    SensorPayload payload;
-    radio.read(&payload, sizeof(payload));
+void sendFakePayloadForTest() {
+  SensorPayload payload;
 
-    Serial.println();
-    Serial.println("RF payload modtaget!");
-    Serial.print("Device ID: ");
-    Serial.println(payload.device_id);
+  payload.sensor_module_id = 1;
+  payload.temperature = 21.5;
+  payload.humidity = 65.2;
+  payload.lux = 1240;
+  payload.soil[0] = 42;
+  payload.soil[1] = 71;
+  payload.soil[2] = 38;
+  payload.soil[3] = 55;
+  payload.timestamp = millis() / 1000;
 
-    Serial.print("Temperature: ");
-    Serial.println(payload.temperature);
-
-    Serial.print("Humidity: ");
-    Serial.println(payload.humidity);
-
-    Serial.print("Lux: ");
-    Serial.println(payload.lux);
-
-    for (int i = 0; i < 4; i++) {
-      Serial.print("Soil[");
-      Serial.print(i);
-      Serial.print("]: ");
-      Serial.println(payload.soil[i]);
-    }
-
-    sendMeasurement(payload);
-  }
+  Serial.println("Sender fake SensorPayload til backend-test");
+  handleThresholds(payload);
+  sendMeasurement(payload);
 }
 
 void setup() {
@@ -271,16 +497,23 @@ void setup() {
   Serial.println("Starter Smart Plantepasser Hub");
 
   connectWiFi();
+  setupTime();
+  setupSD();
   setupRF();
 
-  // Tester command endpoint én gang ved opstart
   getPendingCommands();
+
+  // Midlertidig test. Kommentér ud når fysisk sensor er klar.
+  sendFakePayloadForTest();
 }
 
 void loop() {
-  checkRF();
-
   unsigned long now = millis();
+
+  if (now - lastSensorPoll >= SENSOR_POLL_INTERVAL) {
+    lastSensorPoll = now;
+    pollSensor();
+  }
 
   if (now - lastCommandPoll >= COMMAND_POLL_INTERVAL) {
     lastCommandPoll = now;

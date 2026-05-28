@@ -23,6 +23,20 @@ function DashboardPage() {
   const { plants, refreshPlants } = usePlants();
   const [measurements, setMeasurements] = useState([]);
 
+  const plantsWithMoisture = plants.filter(
+  (plant) => plant.statusData?.soil_moisture != null
+);
+
+const averageMoisture =
+  plantsWithMoisture.length > 0
+    ? Math.round(
+        plantsWithMoisture.reduce(
+          (sum, plant) => sum + plant.statusData.soil_moisture,
+          0
+        ) / plantsWithMoisture.length
+      )
+    : null;
+
 // Cluster context provides the list of clusters and the currently selected cluster
 const {
   clusters,
@@ -141,8 +155,12 @@ async function handleRefreshSensors() {
 
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
           <p className="text-sm text-slate-400">Average Moisture</p>
-          <h2 className="mt-3 text-3xl font-bold text-white">68%</h2>
-          <p className="mt-2 text-sm text-slate-400">Stable across all zones</p>
+          <h2 className="mt-3 text-3xl font-bold text-white">
+            {averageMoisture == null ? 'No data' : `${averageMoisture}%`}
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Calculated from current plant readings
+          </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">

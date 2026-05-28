@@ -34,7 +34,13 @@ class Plant(Base):
     sensor_module_id = Column(Integer, ForeignKey("modules.id"))
     plant_idx = Column(Integer)
     name = Column(String(255))
-
+    type = Column(String(255))
+    location = Column(String(255))
+    note = Column(String(255))
+    soil_threshold = Column(Integer)
+    pump_pwm = Column(Integer)
+    watering_duration_sec = Column(Integer)
+    
 class Measurement(Base):
     __tablename__ = "measurements"
     id = Column(Integer, primary_key=True)
@@ -69,3 +75,13 @@ class Command(Base):
     relay_action = Column(SmallInteger)
     status = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class LightSettings(Base):
+    __tablename__ = "light_settings"
+    id = Column(Integer, primary_key=True)
+    module_id = Column(Integer, ForeignKey("modules.id"))
+    lux_threshold_low = Column(Integer)
+    lux_threshold_high = Column(Integer)
+    light_period = Column(Integer)
+    light_start_hour = Column(Integer)
+    enabled = Column(SmallInteger)

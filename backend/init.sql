@@ -26,7 +26,13 @@ CREATE TABLE IF NOT EXISTS plants (
     sensor_module_id INT NOT NULL,
     FOREIGN KEY (sensor_module_id) REFERENCES modules(id) ON DELETE CASCADE,
     plant_idx INT,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    type VARCHAR(255),
+    location VARCHAR(255),
+    soil_threshold INT DEFAULT 30,
+    pump_pwm INT DEFAULT 100,
+    note VARCHAR(255),
+    watering_duration_sec INT DEFAULT 5
 );
 
 CREATE TABLE IF NOT EXISTS measurements (
@@ -67,4 +73,15 @@ CREATE TABLE IF NOT EXISTS commands (
     relay_action SMALLINT,
     status VARCHAR(255),
     created_at DATETIME DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS light_settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    module_id INT NOT NULL,
+    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+    lux_threshold_low INT,
+    lux_threshold_high INT,
+    light_period INT,
+    light_start_hour INT,
+    enabled SMALLINT
 );

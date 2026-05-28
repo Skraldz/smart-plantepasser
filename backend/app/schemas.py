@@ -45,3 +45,47 @@ class WaterCommand(BaseModel):
 
 class RelayCommand(BaseModel):
     relay_action: int
+
+class PlantCreate(BaseModel):
+    plant_idx: int
+    name: str
+    type: Optional[str] = None
+    location: Optional[str] = None
+    note: Optional[str] = None
+    soil_threshold: Optional[int] = None
+    pump_pwm: Optional[int] = None
+    watering_duration_sec: Optional[int] = None
+
+class PlantUpdate(BaseModel):
+    plant_idx: Optional[int] = None 
+    name: Optional[str] = None
+    type: Optional[str] = None
+    location: Optional[str] = None
+    note: Optional[str] = None
+    soil_threshold: Optional[int] = None
+    pump_pwm: Optional[int] = None
+    watering_duration_sec: Optional[int] = None
+
+class LightSettingsUpdate(BaseModel):
+    lux_threshold_low: Optional[int] = None
+    lux_threshold_high: Optional[int] = None
+    light_period: Optional[int] = None
+    light_start_hour: Optional[int] = None
+    enabled: Optional[int] = None
+
+class PlantSettings(BaseModel):
+    plant_idx: int
+    soil_threshold: Optional[int] = 30
+    pump_pwm: Optional[int] = 100
+    watering_duration_sec: Optional[int] = 5
+    
+class LightSettingsResponse(BaseModel):
+    lux_threshold_low: int
+    lux_threshold_high: int
+    light_period: int
+    light_start_hour: int
+    enabled: int
+
+class SettingsResponse(BaseModel):
+    plants: List[PlantSettings]
+    light: LightSettingsResponse

@@ -5,6 +5,7 @@ import app.models
 from app.routes.measurements import router as measurements_router
 from app.routes.auth import router as auth_router
 from app.routes.commands import router as commands_router
+from app.routes.plants import router as plants_router
 import os
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
@@ -19,6 +20,7 @@ Base.metadata.create_all(bind=engine)                            # Tells SQLalch
 app.include_router(auth_router)
 app.include_router(measurements_router)
 app.include_router(commands_router)
+app.include_router(plants_router)
 
 app.add_middleware(
     CORSMiddleware,

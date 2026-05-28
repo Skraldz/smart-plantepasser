@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
+import { useClusters } from '../ui/components/ClusterProvider';
 
 function RegisterPlantPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { clusters, selectedClusterId, setSelectedClusterId } = useClusters();
 
   const [plantName, setPlantName] = useState('');
   const [species, setSpecies] = useState('');
@@ -19,6 +21,7 @@ function RegisterPlantPage() {
       species,
       location,
       notes,
+      clusterId: selectedClusterId,
     });
 
     showToast('Plant registered successfully.', 'success');
@@ -36,6 +39,28 @@ function RegisterPlantPage() {
 
       <div className="max-w-3xl rounded-3xl border border-white/10 bg-slate-900 p-8 shadow-lg">
         <form className="space-y-5" onSubmit={handleSubmit}>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-100">
+             Cluster
+            </label>
+
+            <select
+               value={selectedClusterId}
+               onChange={(e) => setSelectedClusterId(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+            >
+              {clusters.map((cluster) => (
+                <option key={cluster.id} value={cluster.id}>
+                   {cluster.name} — {cluster.status}
+                </option>
+              ))}
+            </select>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Prototype: each cluster represents one hub with up to 4 connected plants.
+              </p>
+          </div>
+
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-100">
               Plant name

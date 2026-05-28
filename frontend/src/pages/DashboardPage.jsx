@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
 import { usePlants } from '../ui/components/PlantProvider';
+import { useClusters } from '../ui/components/ClusterProvider';
 
 import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard';
 import QuickActions from '../ui/components/dashboard/QuickActions';
 import MoistureChart from '../ui/components/dashboard/MoistureChart';
+
 
 import {
   getMeasurements,
@@ -20,6 +22,13 @@ function DashboardPage() {
   const { showToast } = useToast();
   const { plants, refreshPlants } = usePlants();
   const [moistureHistory, setMoistureHistory] = useState([]);
+
+// Cluster context provides the list of clusters and the currently selected cluster
+const {
+  clusters,
+  selectedClusterId,
+  setSelectedClusterId,
+} = useClusters();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -117,13 +126,34 @@ async function handleRefreshSensors() {
         <p className="mt-2 max-w-2xl text-slate-400">
           Monitor your plants, check system health, and trigger manual actions.
         </p>
+      <div className="mt-6 max-w-sm">
+        <label className="mb-2 block text-sm font-medium text-slate-300">
+          Selected cluster
+        </label>
+
+        <select
+          value={selectedClusterId}
+          onChange={(e) => setSelectedClusterId(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
+  >
+          {clusters.map((cluster) => (
+            <option key={cluster.id} value={cluster.id}>
+              {cluster.name} — {cluster.status}
+            </option>
+          ))}
+        </select>
+
+        <p className="mt-2 text-xs text-slate-500">
+          Concept: each cluster represents one hub with up to 4 plants, watering, and lamp control.
+        </p>
+      </div>
       </div>
 
       <section className="mb-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
           <p className="text-sm text-slate-400">Active Plants</p>
           <h2 className="mt-3 text-3xl font-bold text-white">{plants.length}</h2>
-          <p className="mt-2 text-sm text-emerald-400">+2 this week</p>
+          <p className="mt-2 text-sm text-slate-400">Maximum 4 plants per cluster</p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">

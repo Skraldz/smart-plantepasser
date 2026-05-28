@@ -75,3 +75,13 @@ CREATE TABLE IF NOT EXISTS commands (
     created_at DATETIME DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS light_settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    module_id INT NOT NULL,
+    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+    lux_threshold_low INT,
+    lux_threshold_high INT,
+    light_period INT,
+    light_start_hour INT,
+    enabled SMALLINT
+);

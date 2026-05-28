@@ -6,7 +6,7 @@ import { useClusters } from '../ui/components/ClusterProvider';
 
 import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard';
 import QuickActions from '../ui/components/dashboard/QuickActions';
-import MoistureChart from '../ui/components/dashboard/MoistureChart';
+import HistoryChart from '../ui/components/dashboard/HistoryChart';
 
 
 import {
@@ -21,7 +21,7 @@ function DashboardPage() {
   const [lampStatus, setLampStatus] = useState('On');
   const { showToast } = useToast();
   const { plants, refreshPlants } = usePlants();
-  const [moistureHistory, setMoistureHistory] = useState([]);
+  const [measurements, setMeasurements] = useState([]);
 
 // Cluster context provides the list of clusters and the currently selected cluster
 const {
@@ -41,26 +41,9 @@ const {
   useEffect(() => {
     async function loadMeasurements() {
      try {
-      const measurements = await getMeasurements(1, 24, 0);
+      const data = await getMeasurements(1, 24, 0);
+      setMeasurements(data);
 
-      console.log(measurements);
-
-      const chartData = measurements.map((measurement) => {
-        const row = {
-          time: new Date(measurement.timestamp).toLocaleTimeString('da-DK', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        };
-
-        measurement.soil_readings.forEach((reading) => {
-          row[`plant${reading.plant_idx}`] = reading.soil_moisture;
-        });
-
-        return row;
-      });
-
-      setMoistureHistory(chartData);
     } catch (err) {
       console.error(err);
       showToast('Could not load measurement history.', 'error');
@@ -223,7 +206,7 @@ async function handleRefreshSensors() {
         />
       </section>
       <section className="mt-6">
-        <MoistureChart data={moistureHistory} />
+        <HistoryChart measurements={measurements} plants={plants} />
       </section>
     </div>
   );

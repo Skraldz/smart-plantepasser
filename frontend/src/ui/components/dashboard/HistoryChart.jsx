@@ -19,23 +19,27 @@ function HistoryChart({ measurements, plants }) {
   });
 
   const chartData = useMemo(() => {
-    return measurements.map((measurement) => {
-      const soilReading = measurement.soil_readings?.find(
-        (reading) => reading.plant_idx === Number(selectedPlantIdx)
-      );
+  return measurements.map((measurement) => {
+    const soilReading = measurement.plants?.find(
+      (reading) => reading.plant_id === Number(selectedPlantIdx)
+    );
 
-      return {
-        time: new Date(measurement.timestamp).toLocaleTimeString('da-DK', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        soil: soilReading?.soil_moisture ?? null,
-        temperature: measurement.temperature ?? null,
-        humidity: measurement.humidity ?? null,
-        lux: measurement.lux ?? null,
-      };
-    });
-  }, [measurements, selectedPlantIdx]);
+    return {
+      time: new Date(measurement.timestamp).toLocaleString('da-DK', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+
+      soil: soilReading?.soil_moisture ?? null,
+      temperature: measurement.temperature ?? null,
+      humidity: measurement.humidity ?? null,
+      lux: measurement.lux ?? null,
+    };
+  });
+}, [measurements, selectedPlantIdx]);
 
   function toggleMetric(metric) {
     setSelectedMetrics((current) => ({

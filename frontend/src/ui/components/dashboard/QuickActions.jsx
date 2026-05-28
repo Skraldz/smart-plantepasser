@@ -23,7 +23,7 @@ function QuickActions({
     try {
       setIsSavingLight(true);
 
-      await updateLightSettings(1, {
+      await updateLightSettings(3, {
         lux_threshold_low: Number(luxLow),
         lux_threshold_high: Number(luxHigh),
         light_period: Number(lightPeriod),

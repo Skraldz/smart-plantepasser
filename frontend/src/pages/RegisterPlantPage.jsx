@@ -19,13 +19,14 @@ function RegisterPlantPage() {
   const [species, setSpecies] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [plantIdx, setPlantIdx] = useState(0);
 
   async function handleSubmit(e) {
     e.preventDefault();
 
     try {
       const plantData = {
-        plant_idx: 0,
+        plant_idx: Number(plantIdx),
         name: plantName,
         type: species,
         location,
@@ -88,6 +89,27 @@ function RegisterPlantPage() {
             <p className="mt-2 text-xs text-slate-500">
               Prototype: each cluster represents one hub with up to 4 connected
               plants.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-100">
+              Plant position
+            </label>
+
+            <select
+              value={plantIdx}
+              onChange={(e) => setPlantIdx(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+            >
+              <option value={0}>Slot 0</option>
+              <option value={1}>Slot 1</option>
+              <option value={2}>Slot 2</option>
+              <option value={3}>Slot 3</option>
+            </select>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Each cluster supports four physical plant positions: 0–3.
             </p>
           </div>
 

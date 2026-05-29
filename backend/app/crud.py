@@ -183,7 +183,7 @@ def delete_plant(db: Session, plant_idx: int, sensor_module_id: int):
 
 def get_settings(db: Session, sensor_module_id: int):
     plants = get_plants(db, sensor_module_id)
-    light = db.query(LightSettings).filter(LightSettings.module_id == sensor_module_id).first()
+    light = db.query(LightSettings).filter(LightSettings.module_id == 3).first()
     if light is None:
         return None
     plant_settings = [

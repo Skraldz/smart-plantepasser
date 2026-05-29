@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, SmallInteger, Float
 from app.database import Base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 # These are the classes that are used to represent the tables in the database
 # Using sqlalchemy allows python and the database to interact with eachother
@@ -50,6 +51,8 @@ class Measurement(Base):
     humidity = Column(Float)
     lux = Column(Integer)
     lamp_on = Column(SmallInteger, default=0)
+    soil_readings = relationship("SoilReading", backref="measurement", lazy="joined")
+
 
 class SoilReading(Base):
     __tablename__ = "soil_readings"

@@ -20,7 +20,7 @@ function CustomXAxisTick({ x, y, payload }) {
         </tspan>
 
         {date && (
-          <tspan x="0" dy="16" fill="#64748b" fontSize={11}>
+          <tspan x="0" dy="18" fill="#64748b" fontSize={11}>
             {date}
           </tspan>
         )}
@@ -29,7 +29,46 @@ function CustomXAxisTick({ x, y, payload }) {
   );
 }
 
-function HistoryChart({ measurements, plants }) {
+function getPlantReadings(measurement) {
+  return (
+    measurement.plants ||
+    measurement.soil_readings ||
+    measurement.plant_readings ||
+    []
+  );
+}
+
+function getSoilMoisture(measurement, selectedPlantIdx) {
+  const plantReadings = getPlantReadings(measurement);
+
+  const soilReading = plantReadings.find((reading) => {
+    const readingPlantIdx =
+      reading.plant_id ??
+      reading.plant_idx ??
+      reading.plantId;
+
+    return Number(readingPlantIdx) === Number(selectedPlantIdx);
+  });
+
+  return (
+    soilReading?.soil_moisture ??
+    soilReading?.soilMoisture ??
+    null
+  );
+}
+
+function average(values) {
+  const validValues = values.filter((value) => value != null);
+
+  if (validValues.length === 0) return null;
+
+  return Math.round(
+    validValues.reduce((sum, value) => sum + Number(value), 0) /
+      validValues.length
+  );
+}
+
+function HistoryChart({ measurements, plants, historyRange }) {
   const [selectedPlantIdx, setSelectedPlantIdx] = useState(0);
   const [selectedMetrics, setSelectedMetrics] = useState({
     soil: true,
@@ -39,6 +78,46 @@ function HistoryChart({ measurements, plants }) {
   });
 
   const chartData = useMemo(() => {
+    const shouldAggregateByDay = historyRange !== 24;
+
+    if (shouldAggregateByDay) {
+      const groupedByDate = measurements.reduce((groups, measurement) => {
+        const dateObject = new Date(measurement.timestamp);
+
+        const dateKey = dateObject.toLocaleDateString('da-DK', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit',
+        });
+
+        if (!groups[dateKey]) {
+          groups[dateKey] = {
+            soil: [],
+            temperature: [],
+            humidity: [],
+            lux: [],
+          };
+        }
+
+        groups[dateKey].soil.push(
+          getSoilMoisture(measurement, selectedPlantIdx)
+        );
+        groups[dateKey].temperature.push(measurement.temperature ?? null);
+        groups[dateKey].humidity.push(measurement.humidity ?? null);
+        groups[dateKey].lux.push(measurement.lux ?? null);
+
+        return groups;
+      }, {});
+
+      return Object.entries(groupedByDate).map(([date, values]) => ({
+        time: `Avg|${date}`,
+        soil: average(values.soil),
+        temperature: average(values.temperature),
+        humidity: average(values.humidity),
+        lux: average(values.lux),
+      }));
+    }
+
     let previousDate = '';
 
     return measurements.map((measurement) => {
@@ -58,19 +137,15 @@ function HistoryChart({ measurements, plants }) {
       const shouldShowDate = date !== previousDate;
       previousDate = date;
 
-      const soilReading = measurement.plants?.find(
-        (reading) => reading.plant_id === Number(selectedPlantIdx)
-      );
-
       return {
         time: shouldShowDate ? `${time}|${date}` : `${time}|`,
-        soil: soilReading?.soil_moisture ?? null,
+        soil: getSoilMoisture(measurement, selectedPlantIdx),
         temperature: measurement.temperature ?? null,
         humidity: measurement.humidity ?? null,
         lux: measurement.lux ?? null,
       };
     });
-  }, [measurements, selectedPlantIdx]);
+  }, [measurements, selectedPlantIdx, historyRange]);
 
   function toggleMetric(metric) {
     setSelectedMetrics((current) => ({
@@ -141,16 +216,16 @@ function HistoryChart({ measurements, plants }) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 10, right: 20, left: 0, bottom: 40 }}
->
+            margin={{ top: 10, right: 20, left: 0, bottom: 48 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
 
-           <XAxis
-            dataKey="time"
-            tick={<CustomXAxisTick />}
-            interval="preserveStartEnd"
-            height={70}
-            tickMargin={18}
+            <XAxis
+              dataKey="time"
+              tick={<CustomXAxisTick />}
+              interval="preserveStartEnd"
+              height={78}
+              tickMargin={22}
             />
 
             <YAxis />
@@ -161,7 +236,8 @@ function HistoryChart({ measurements, plants }) {
                 type="monotone"
                 dataKey="soil"
                 name="Soil moisture"
-                strokeWidth={3}
+                strokeWidth={4}
+                connectNulls
               />
             )}
 
@@ -170,7 +246,8 @@ function HistoryChart({ measurements, plants }) {
                 type="monotone"
                 dataKey="temperature"
                 name="Temperature"
-                strokeWidth={3}
+                strokeWidth={4}
+                connectNulls
               />
             )}
 
@@ -179,7 +256,8 @@ function HistoryChart({ measurements, plants }) {
                 type="monotone"
                 dataKey="humidity"
                 name="Humidity"
-                strokeWidth={3}
+                strokeWidth={4}
+                connectNulls
               />
             )}
 
@@ -188,7 +266,8 @@ function HistoryChart({ measurements, plants }) {
                 type="monotone"
                 dataKey="lux"
                 name="Lux"
-                strokeWidth={3}
+                strokeWidth={4}
+                connectNulls
               />
             )}
           </LineChart>

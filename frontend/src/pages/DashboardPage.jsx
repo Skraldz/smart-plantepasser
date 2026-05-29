@@ -54,6 +54,10 @@ function DashboardPage() {
     async function loadMeasurements() {
       try {
         const data = await getMeasurements(1, historyRange, 0);
+
+        console.log('Measurements from API:', data);
+        console.log('First measurement:', data[0]);
+
         setMeasurements(data);
       } catch (err) {
         console.error(err);
@@ -334,7 +338,11 @@ if (rows.length === 0) {
           </button>
         </div>
 
-        <HistoryChart measurements={measurements} plants={plants} />
+        <HistoryChart
+          measurements={measurements}
+          plants={plants}
+          historyRange={historyRange}
+        />
       </section>
     </div>
   );

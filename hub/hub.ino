@@ -448,6 +448,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("Starter Smart Plantepasser Hub");
+  SPI.begin(18, 19, 23, 5); // Én gang, før alt andet der bruger SPI
   connectWiFi();
   setupTime();
   setupSD();

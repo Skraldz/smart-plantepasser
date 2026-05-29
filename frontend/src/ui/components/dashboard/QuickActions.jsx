@@ -19,7 +19,6 @@ function QuickActions({
   const [isSavingLight, setIsSavingLight] = useState(false);
 
   async function handleSaveLightSettings() {
-    console.log(updateLightSettings);
     try {
       setIsSavingLight(true);
 

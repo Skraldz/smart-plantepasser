@@ -9,6 +9,26 @@ import {
   YAxis,
 } from 'recharts';
 
+function CustomXAxisTick({ x, y, payload }) {
+  const [time, date] = String(payload.value).split('|');
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#94a3b8" fontSize={12}>
+        <tspan x="0" dy="0">
+          {time}
+        </tspan>
+
+        {date && (
+          <tspan x="0" dy="16" fill="#64748b" fontSize={11}>
+            {date}
+          </tspan>
+        )}
+      </text>
+    </g>
+  );
+}
+
 function HistoryChart({ measurements, plants }) {
   const [selectedPlantIdx, setSelectedPlantIdx] = useState(0);
   const [selectedMetrics, setSelectedMetrics] = useState({
@@ -19,27 +39,38 @@ function HistoryChart({ measurements, plants }) {
   });
 
   const chartData = useMemo(() => {
-  return measurements.map((measurement) => {
-    const soilReading = measurement.plants?.find(
-      (reading) => reading.plant_id === Number(selectedPlantIdx)
-    );
+    let previousDate = '';
 
-    return {
-      time: new Date(measurement.timestamp).toLocaleString('da-DK', {
+    return measurements.map((measurement) => {
+      const dateObject = new Date(measurement.timestamp);
+
+      const time = dateObject.toLocaleTimeString('da-DK', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      const date = dateObject.toLocaleDateString('da-DK', {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      });
 
-      soil: soilReading?.soil_moisture ?? null,
-      temperature: measurement.temperature ?? null,
-      humidity: measurement.humidity ?? null,
-      lux: measurement.lux ?? null,
-    };
-  });
-}, [measurements, selectedPlantIdx]);
+      const shouldShowDate = date !== previousDate;
+      previousDate = date;
+
+      const soilReading = measurement.plants?.find(
+        (reading) => reading.plant_id === Number(selectedPlantIdx)
+      );
+
+      return {
+        time: shouldShowDate ? `${time}|${date}` : `${time}|`,
+        soil: soilReading?.soil_moisture ?? null,
+        temperature: measurement.temperature ?? null,
+        humidity: measurement.humidity ?? null,
+        lux: measurement.lux ?? null,
+      };
+    });
+  }, [measurements, selectedPlantIdx]);
 
   function toggleMetric(metric) {
     setSelectedMetrics((current) => ({
@@ -70,6 +101,7 @@ function HistoryChart({ measurements, plants }) {
           <label className="mb-2 block text-sm font-medium text-slate-300">
             Plant
           </label>
+
           <select
             value={selectedPlantIdx}
             onChange={(e) => setSelectedPlantIdx(Number(e.target.value))}
@@ -107,26 +139,57 @@ function HistoryChart({ measurements, plants }) {
 
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 10, right: 20, left: 0, bottom: 40 }}
+>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
+
+           <XAxis
+            dataKey="time"
+            tick={<CustomXAxisTick />}
+            interval="preserveStartEnd"
+            height={70}
+            tickMargin={18}
+            />
+
             <YAxis />
             <Tooltip />
 
             {selectedMetrics.soil && (
-              <Line type="monotone" dataKey="soil" name="Soil moisture" />
+              <Line
+                type="monotone"
+                dataKey="soil"
+                name="Soil moisture"
+                strokeWidth={3}
+              />
             )}
 
             {selectedMetrics.temperature && (
-              <Line type="monotone" dataKey="temperature" name="Temperature" />
+              <Line
+                type="monotone"
+                dataKey="temperature"
+                name="Temperature"
+                strokeWidth={3}
+              />
             )}
 
             {selectedMetrics.humidity && (
-              <Line type="monotone" dataKey="humidity" name="Humidity" />
+              <Line
+                type="monotone"
+                dataKey="humidity"
+                name="Humidity"
+                strokeWidth={3}
+              />
             )}
 
             {selectedMetrics.lux && (
-              <Line type="monotone" dataKey="lux" name="Lux" />
+              <Line
+                type="monotone"
+                dataKey="lux"
+                name="Lux"
+                strokeWidth={3}
+              />
             )}
           </LineChart>
         </ResponsiveContainer>

@@ -1,14 +1,14 @@
 #pragma once
 
-#define WIFI_SSID "FarligFredag"
-#define WIFI_PASSWORD "tissemand"
+#define WIFI_SSID "test"
+#define WIFI_PASSWORD "test"
 
 #define BACKEND_HEALTH_URL "https://plantapi.mandingo.dk/"
 #define BACKEND_URL "https://plantapi.mandingo.dk/api/v1/measurements"
 #define COMMANDS_URL "https://plantapi.mandingo.dk/api/v1/commands/pending"
 #define SETTINGS_URL "https://plantapi.mandingo.dk/api/v1/settings?sensor_module_id=1"
 
-#define DEVICE_SECRET "DEVICE_SECRET"
+#define DEVICE_SECRET "spis_mere_ost"
 
 #define SD_CS_PIN 22
 

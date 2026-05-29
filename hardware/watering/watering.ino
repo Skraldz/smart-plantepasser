@@ -22,11 +22,11 @@
 #include <SPI.h>
 #include <RF24.h>
 
-#include "../rf_protocol.h"
+#include "rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
-#define RF_CE_PIN   9
-#define RF_CSN_PIN  10
+#define RF_CE_PIN   10
+#define RF_CSN_PIN  9
 
 // PWM-pins til MOSFET-gates (én per pumpe)
 // D3, D5, D6 = PWM. D4 = non-PWM (on/off til pump 3)

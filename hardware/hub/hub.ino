@@ -8,7 +8,7 @@
 #include <time.h>
 
 #include "config.h"
-#include "../rf_protocol.h"
+#include "rf_protocol.h"
 
 // ── SPI busser ───────────────────────────────────────────────
 // ESP32 har to hardware SPI busser — NRF og SD deler ikke bus
@@ -426,21 +426,21 @@ void getPendingCommands() {
   http.end();
 }
 
-void sendFakePayloadForTest() {
-  SensorPayload payload;
-  payload.sensor_module_id = 1;
-  payload.temperature      = 21.5;
-  payload.humidity         = 65.2;
-  payload.lux              = 1240;
-  payload.soil[0]          = 42;
-  payload.soil[1]          = 71;
-  payload.soil[2]          = 38;
-  payload.soil[3]          = 55;
-  payload.timestamp        = millis() / 1000;
-  Serial.println("Sender fake SensorPayload til backend-test");
-  handleThresholds(payload);
-  sendMeasurement(payload);
-}
+// void sendFakePayloadForTest() {
+//   SensorPayload payload;
+//   payload.sensor_module_id = 1;
+//   payload.temperature      = 21.5;
+//   payload.humidity         = 65.2;
+//   payload.lux              = 1240;
+//   payload.soil[0]          = 42;
+//   payload.soil[1]          = 71;
+//   payload.soil[2]          = 38;
+//   payload.soil[3]          = 55;
+//   payload.timestamp        = millis() / 1000;
+//   Serial.println("Sender fake SensorPayload til backend-test");
+//   handleThresholds(payload);
+//   sendMeasurement(payload);
+// }
 
 void setup() {
   Serial.begin(115200);
@@ -461,7 +461,7 @@ void setup() {
   fetchSettings();
   getPendingCommands();
   // Midlertidig test — kommentér ud når fysisk sensor er klar
-  sendFakePayloadForTest();
+  // sendFakePayloadForTest();
 }
 
 void loop() {

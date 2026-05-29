@@ -16,11 +16,11 @@
 #include <SPI.h>
 #include <RF24.h>
 
-#include "../rf_protocol.h"
+#include "rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
-#define RF_CE_PIN   9
-#define RF_CSN_PIN  10
+#define RF_CE_PIN   10
+#define RF_CSN_PIN  9
 
 #define RELAY_PIN   7   // Digital pin til relæ IN
 

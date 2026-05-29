@@ -1,4 +1,4 @@
-// ============================================================
+// =============================================================
 // sensor.ino — Sensormodul firmware
 // Smart Plantepasser — IT Teknolog eksamensprojekt
 //
@@ -26,11 +26,11 @@
 #include <Wire.h>
 #include <Adafruit_VEML7700.h>
 
-#include "../rf_protocol.h"
+#include "rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
-#define RF_CE_PIN  9
-#define RF_CSN_PIN 10
+#define RF_CE_PIN  10 // Omvendt af dokumentation!!!
+#define RF_CSN_PIN 9  // Omvendt af dokumentation!!!
 
 #define DHT_PIN   7
 #define DHT_TYPE  DHT22
@@ -40,17 +40,12 @@ const uint8_t SOIL_PINS[4] = {A0, A1, A2, A3};
 #define SENSOR_MODULE_ID 1
 
 // ── Objekter ─────────────────────────────────────────────────
-// Erklæres før funktionerne så alle funktioner kan se dem
 RF24 radio(RF_CE_PIN, RF_CSN_PIN);
 DHT dht(DHT_PIN, DHT_TYPE);
 Adafruit_VEML7700 veml;
 
 // ── Sensoraflæsning ──────────────────────────────────────────
 
-// Jordfugt: 100 samples med 1ms pause → gennemsnit → 0–100%
-// Kalibrér DRY_VAL og WET_VAL til jeres sensorer:
-//   Hold sensor i tør luft → Serial monitor → noter råværdi → DRY_VAL
-//   Hold sensor i vand     → Serial monitor → noter råværdi → WET_VAL
 uint8_t readSoilMoisture(uint8_t pin) {
   float sum = 0;
   for (int i = 0; i < 100; i++) {
@@ -66,7 +61,6 @@ uint8_t readSoilMoisture(uint8_t pin) {
   return (uint8_t)constrain(pct, 0, 100);
 }
 
-// Lux: enkelt kald til VEML7700, capper til uint16_t
 uint16_t readLux() {
   float lux = veml.readLux(VEML_LUX_AUTO);
   if (lux < 0)     lux = 0;
@@ -89,7 +83,6 @@ SensorPayload buildPayload() {
     payload.soil[i] = readSoilMoisture(SOIL_PINS[i]);
   }
 
-  // DHT22 returnerer NaN ved fejl — erstat med 0
   if (isnan(payload.temperature) || isnan(payload.humidity)) {
     Serial.println("ADVARSEL: DHT22 aflæsning fejlede — sender 0-værdier");
     payload.temperature = 0.0;
@@ -137,16 +130,10 @@ void setup() {
   delay(1000);
   Serial.println("Starter Sensormodul...");
 
-  dht.begin();
-  Serial.println("DHT22 klar");
-
-  if (!veml.begin()) {
-    Serial.println("FEJL: VEML7700 ikke fundet — tjek I2C (A4=SDA, A5=SCL)");
-  } else {
-    veml.setGain(VEML7700_GAIN_1);
-    veml.setIntegrationTime(VEML7700_IT_100MS);
-    Serial.println("VEML7700 klar");
-  }
+  // NRF først — før noget andet initialiseres
+  pinMode(RF_CSN_PIN, OUTPUT);
+  digitalWrite(RF_CSN_PIN, HIGH);
+  delay(100);
 
   if (!radio.begin()) {
     Serial.println("FEJL: NRF24L01 ikke fundet — tjek SPI (CE/CSN pins)");
@@ -159,14 +146,24 @@ void setup() {
   radio.setAutoAck(true);
   radio.openReadingPipe(1, POLL_ADDR);
   radio.startListening();
-
   Serial.println("NRF24L01 klar — lytter efter PollRequest på POLL_ADDR");
+
+  // DHT og VEML efter RF
+  dht.begin();
+  Serial.println("DHT22 klar");
+
+  if (!veml.begin()) {
+    Serial.println("FEJL: VEML7700 ikke fundet — tjek I2C (A4=SDA, A5=SCL)");
+  } else {
+    veml.setGain(VEML7700_GAIN_1);
+    veml.setIntegrationTime(VEML7700_IT_100MS);
+    Serial.println("VEML7700 klar");
+  }
+
   Serial.println("Sensormodul klar og afventer hub");
 }
 
 // ── Loop ──────────────────────────────────────────────────────
-// Modulet er fuldstændig passivt — venter på PollRequest fra hub.
-// Al timing styres udelukkende af hubben.
 void loop() {
   if (radio.available()) {
     PollRequest req;

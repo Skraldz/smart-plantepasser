@@ -38,23 +38,26 @@ function getPlantReadings(measurement) {
   );
 }
 
-function getSoilMoisture(measurement, selectedPlantIdx) {
+function getSoilMoisture(measurement, selectedPlantIdx, plants) {
   const plantReadings = getPlantReadings(measurement);
 
+  const selectedPlant = plants.find(
+    (plant) => Number(plant.plant_idx) === Number(selectedPlantIdx)
+  );
+
   const soilReading = plantReadings.find((reading) => {
-    const readingPlantIdx =
+    const readingPlantId =
       reading.plant_id ??
       reading.plant_idx ??
       reading.plantId;
 
-    return Number(readingPlantIdx) === Number(selectedPlantIdx);
+    return (
+      Number(readingPlantId) === Number(selectedPlantIdx) ||
+      Number(readingPlantId) === Number(selectedPlant?.id)
+    );
   });
 
-  return (
-    soilReading?.soil_moisture ??
-    soilReading?.soilMoisture ??
-    null
-  );
+  return soilReading?.soil_moisture ?? soilReading?.soilMoisture ?? null;
 }
 
 function average(values) {
@@ -70,6 +73,8 @@ function average(values) {
 
 function HistoryChart({ measurements, plants, historyRange }) {
   const [selectedPlantIdx, setSelectedPlantIdx] = useState(0);
+  const [chartMode, setChartMode] = useState('auto');
+
   const [selectedMetrics, setSelectedMetrics] = useState({
     soil: true,
     temperature: false,
@@ -78,7 +83,9 @@ function HistoryChart({ measurements, plants, historyRange }) {
   });
 
   const chartData = useMemo(() => {
-    const shouldAggregateByDay = historyRange !== 24;
+    const shouldAggregateByDay =
+      chartMode === 'daily' ||
+      (chartMode === 'auto' && historyRange > 24);
 
     if (shouldAggregateByDay) {
       const groupedByDate = measurements.reduce((groups, measurement) => {
@@ -100,7 +107,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
         }
 
         groups[dateKey].soil.push(
-          getSoilMoisture(measurement, selectedPlantIdx)
+          getSoilMoisture(measurement, selectedPlantIdx, plants)
         );
         groups[dateKey].temperature.push(measurement.temperature ?? null);
         groups[dateKey].humidity.push(measurement.humidity ?? null);
@@ -111,6 +118,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
 
       return Object.entries(groupedByDate).map(([date, values]) => ({
         time: `Avg|${date}`,
+        tooltipTime: `${date} (daily average)`,
         soil: average(values.soil),
         temperature: average(values.temperature),
         humidity: average(values.humidity),
@@ -139,13 +147,20 @@ function HistoryChart({ measurements, plants, historyRange }) {
 
       return {
         time: shouldShowDate ? `${time}|${date}` : `${time}|`,
-        soil: getSoilMoisture(measurement, selectedPlantIdx),
+        tooltipTime: dateObject.toLocaleString('da-DK', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        soil: getSoilMoisture(measurement, selectedPlantIdx, plants),
         temperature: measurement.temperature ?? null,
         humidity: measurement.humidity ?? null,
         lux: measurement.lux ?? null,
       };
     });
-  }, [measurements, selectedPlantIdx, historyRange]);
+  }, [measurements, selectedPlantIdx, plants, historyRange, chartMode]);
 
   function toggleMetric(metric) {
     setSelectedMetrics((current) => ({
@@ -172,22 +187,40 @@ function HistoryChart({ measurements, plants, historyRange }) {
           </p>
         </div>
 
-        <div className="w-full max-w-xs">
-          <label className="mb-2 block text-sm font-medium text-slate-300">
-            Plant
-          </label>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="w-full min-w-56">
+            <label className="mb-2 block text-sm font-medium text-slate-300">
+              Plant
+            </label>
 
-          <select
-            value={selectedPlantIdx}
-            onChange={(e) => setSelectedPlantIdx(Number(e.target.value))}
-            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
-          >
-            {plants.map((plant) => (
-              <option key={plant.id} value={plant.plant_idx}>
-                {plant.name}
-              </option>
-            ))}
-          </select>
+            <select
+              value={selectedPlantIdx}
+              onChange={(e) => setSelectedPlantIdx(Number(e.target.value))}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
+            >
+              {plants.map((plant) => (
+                <option key={plant.id} value={plant.plant_idx}>
+                  {plant.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full min-w-56">
+            <label className="mb-2 block text-sm font-medium text-slate-300">
+              Chart mode
+            </label>
+
+            <select
+              value={chartMode}
+              onChange={(e) => setChartMode(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
+            >
+              <option value="auto">Auto</option>
+              <option value="all">All readings</option>
+              <option value="daily">Daily average</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -212,11 +245,11 @@ function HistoryChart({ measurements, plants, historyRange }) {
         ))}
       </div>
 
-      <div className="h-80">
+      <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 10, right: 20, left: 0, bottom: 48 }}
+            margin={{ top: 10, right: 20, left: 0, bottom: 95 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
 
@@ -224,12 +257,33 @@ function HistoryChart({ measurements, plants, historyRange }) {
               dataKey="time"
               tick={<CustomXAxisTick />}
               interval="preserveStartEnd"
-              height={78}
-              tickMargin={22}
+              minTickGap={40}
+              height={86}
+              tickMargin={24}
             />
 
             <YAxis />
-            <Tooltip />
+           <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+
+              const data = payload[0].payload;
+
+              return (
+                <div className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white shadow-lg">
+                  <p className="mb-2 font-semibold text-slate-200">
+                    {data.tooltipTime}
+                  </p>
+
+                  {payload.map((item) => (
+                    <p key={item.dataKey} className="text-slate-300">
+                      {item.name}: {item.value}
+                    </p>
+                  ))}
+                </div>
+              );
+            }}
+          />
 
             {selectedMetrics.soil && (
               <Line

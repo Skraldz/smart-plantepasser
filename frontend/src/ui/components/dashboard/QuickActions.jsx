@@ -4,6 +4,7 @@ import { useToast } from '../ToastProvider';
 
 function QuickActions({
   lampStatus,
+  systemNotices = [],
   onWateringCycle,
   onToggleLamp,
   onRefreshSensors,
@@ -182,9 +183,23 @@ function QuickActions({
       <div className="mt-8 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
         <h3 className="text-lg font-semibold text-white">System Notice</h3>
 
-        <p className="mt-2 text-sm text-slate-400">
-          All systems are operational. No critical alerts detected.
-        </p>
+        <div className="mt-3 space-y-2">
+          {systemNotices.map((notice, index) => (
+            <div
+              key={index}
+              className={`rounded-xl px-3 py-2 text-sm ${
+                notice.type === 'warning'
+                  ? 'bg-amber-500/10 text-amber-300'
+                  : notice.type === 'success'
+                    ? 'bg-emerald-500/10 text-emerald-300'
+                    : 'bg-blue-500/10 text-blue-300'
+              }`}
+            >
+
+              {notice.message}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

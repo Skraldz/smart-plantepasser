@@ -15,9 +15,9 @@ import {
 } from '../api/plantepasserApi';
 
 function DashboardPage() {
-  const [lampStatus, setLampStatus] = useState('On');
   const [measurements, setMeasurements] = useState([]);
-  const [historyRange, setHistoryRange] = useState(24);
+  const [fromHours, setFromHours] = useState(24);
+  const [toHours, setToHours] = useState(0);
 
   const { showToast } = useToast();
   const { plants, refreshPlants } = usePlants();
@@ -27,6 +27,13 @@ function DashboardPage() {
     selectedClusterId,
     setSelectedClusterId,
   } = useClusters();
+
+  const lampStatus =
+    plants.some((plant) => plant.statusData?.lamp_on === 1)
+      ? 'On'
+      : plants.some((plant) => plant.statusData?.lamp_on === 0)
+        ? 'Off'
+        : 'No data';
 
   const plantsWithMoisture = plants.filter(
     (plant) => plant.statusData?.soil_moisture != null
@@ -42,6 +49,41 @@ function DashboardPage() {
         )
       : null;
 
+  const systemNotices = [];
+
+  plants.forEach((plant) => {
+    const moisture = plant.statusData?.soil_moisture;
+    const threshold = plant.soil_threshold ?? 30;
+
+    if (moisture != null && moisture < threshold) {
+      systemNotices.push({
+        type: 'warning',
+        message: `${plant.name} moisture is below threshold.`,
+      });
+    }
+  });
+
+  if (lampStatus === 'On') {
+    systemNotices.push({
+      type: 'info',
+      message: 'Growth lamp is currently enabled.',
+    });
+  }
+
+  if (lampStatus === 'Off') {
+    systemNotices.push({
+      type: 'info',
+      message: 'Growth lamp is currently disabled.',
+    });
+  }
+
+  if (systemNotices.length === 0) {
+    systemNotices.push({
+      type: 'success',
+      message: 'All systems are operational. No critical alerts detected.',
+    });
+  }
+
   useEffect(() => {
     const interval = setInterval(() => {
       refreshPlants();
@@ -53,11 +95,7 @@ function DashboardPage() {
   useEffect(() => {
     async function loadMeasurements() {
       try {
-        const data = await getMeasurements(1, historyRange, 0);
-
-        console.log('Measurements from API:', data);
-        console.log('First measurement:', data[0]);
-
+        const data = await getMeasurements(1, fromHours, toHours);
         setMeasurements(data);
       } catch (err) {
         console.error(err);
@@ -66,7 +104,7 @@ function DashboardPage() {
     }
 
     loadMeasurements();
-  }, [showToast, historyRange]);
+  }, [showToast, fromHours, toHours]);
 
   async function handleWateringCycle() {
     try {
@@ -76,6 +114,8 @@ function DashboardPage() {
       }
 
       await sendWaterCommand(plants[0].plant_idx, 5);
+      await refreshPlants();
+
       showToast('Watering command sent successfully.', 'success');
     } catch (err) {
       console.error(err);
@@ -88,10 +128,9 @@ function DashboardPage() {
       const nextRelayAction = lampStatus === 'On' ? 0 : 1;
 
       await sendRelayCommand(nextRelayAction);
+      await refreshPlants();
 
       const nextStatus = nextRelayAction === 1 ? 'On' : 'Off';
-
-      setLampStatus(nextStatus);
 
       showToast(
         `Growth lamp turned ${nextStatus.toLowerCase()}.`,
@@ -120,24 +159,24 @@ function DashboardPage() {
     }
 
     const rows = measurements.flatMap((measurement) => {
-  const plantReadings =
-    measurement.plants || measurement.soil_readings || [];
+      const plantReadings =
+        measurement.plants || measurement.soil_readings || [];
 
-  return plantReadings.map((plant) => ({
-    timestamp: measurement.timestamp,
-    plant_id: plant.plant_id ?? plant.plant_idx ?? '',
-    soil_moisture: plant.soil_moisture ?? '',
-    temperature: measurement.temperature ?? '',
-    humidity: measurement.humidity ?? '',
-    lux: measurement.lux ?? '',
-    lamp_on: measurement.lamp_on ?? '',
-  }));
-});
+      return plantReadings.map((plant) => ({
+        timestamp: measurement.timestamp,
+        plant_id: plant.plant_id ?? plant.plant_idx ?? '',
+        soil_moisture: plant.soil_moisture ?? '',
+        temperature: measurement.temperature ?? '',
+        humidity: measurement.humidity ?? '',
+        lux: measurement.lux ?? '',
+        lamp_on: measurement.lamp_on ?? '',
+      }));
+    });
 
-if (rows.length === 0) {
-  showToast('No measurement values available to export.', 'warning');
-  return;
-}
+    if (rows.length === 0) {
+      showToast('No measurement values available to export.', 'warning');
+      return;
+    }
 
     const headers = [
       'timestamp',
@@ -164,7 +203,7 @@ if (rows.length === 0) {
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = `plant-measurements-${historyRange}h.csv`;
+    link.download = `plant-measurements-${fromHours}-${toHours}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -232,7 +271,7 @@ if (rows.length === 0) {
           <p className="text-sm text-slate-400">Lamp Status</p>
           <h2 className="mt-3 text-3xl font-bold text-white">{lampStatus}</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Controlled by manual and automation settings
+            Derived from latest backend status data
           </p>
         </div>
 
@@ -289,6 +328,7 @@ if (rows.length === 0) {
 
         <QuickActions
           lampStatus={lampStatus}
+          systemNotices={systemNotices}
           onWateringCycle={handleWateringCycle}
           onToggleLamp={handleToggleLamp}
           onRefreshSensors={handleRefreshSensors}
@@ -296,38 +336,75 @@ if (rows.length === 0) {
       </section>
 
       <section className="mt-6">
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-end gap-4">
+          <div>
+            <label className="mb-1 block text-sm text-slate-400">
+              From hours ago
+            </label>
+
+            <input
+              type="number"
+              min="1"
+              value={fromHours}
+              onChange={(e) => setFromHours(Number(e.target.value))}
+              className="w-32 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-slate-400">
+              To hours ago
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value={toHours}
+              onChange={(e) => setToHours(Number(e.target.value))}
+              className="w-32 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white"
+            />
+          </div>
+
           <button
-            onClick={() => setHistoryRange(24)}
-            className={`rounded-xl px-4 py-2 text-sm font-medium ${
-              historyRange === 24
+            onClick={() => {
+              setFromHours(24);
+              setToHours(0);
+            }}
+            className={`rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 ${
+              fromHours === 24 && toHours === 0
                 ? 'bg-emerald-500 text-slate-950'
-                : 'bg-slate-900 text-white'
+                : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
-            24h
+            Last 24h
           </button>
 
           <button
-            onClick={() => setHistoryRange(168)}
-            className={`rounded-xl px-4 py-2 text-sm font-medium ${
-              historyRange === 168
+            onClick={() => {
+              setFromHours(168);
+              setToHours(0);
+            }}
+            className={`rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 ${
+              fromHours === 168 && toHours === 0
                 ? 'bg-emerald-500 text-slate-950'
-                : 'bg-slate-900 text-white'
+                : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
-            7d
+            Last 7d
           </button>
 
           <button
-            onClick={() => setHistoryRange(720)}
-            className={`rounded-xl px-4 py-2 text-sm font-medium ${
-              historyRange === 720
+            onClick={() => {
+              setFromHours(720);
+              setToHours(0);
+            }}
+            className={`rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 ${
+              fromHours === 720 && toHours === 0
                 ? 'bg-emerald-500 text-slate-950'
-                : 'bg-slate-900 text-white'
+                : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
-            30d
+            Last 30d
           </button>
 
           <button
@@ -341,7 +418,7 @@ if (rows.length === 0) {
         <HistoryChart
           measurements={measurements}
           plants={plants}
-          historyRange={historyRange}
+          historyRange={fromHours}
         />
       </section>
     </div>

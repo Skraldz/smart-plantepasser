@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../api/auth';
+
 import backgroundImage from '../assets/g1.background.jpg';
 import electronicslogo from '../assets/g1.electronics.hvid.png';
 
@@ -25,16 +27,21 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      console.log({
-        email,
-        password,
-        product_key: productKey,
-      });
+  await register(
+    email,
+    password,
+    productKey
+  );
 
-      navigate('/');
-    } catch (err) {
-      setError('Registration failed.');
-    } finally {
+  navigate('/');
+} catch (err) {
+  console.error(err);
+
+  setError(
+    err.response?.data?.detail ||
+    'Registration failed.'
+  );
+} finally {
       setLoading(false);
     }
   }

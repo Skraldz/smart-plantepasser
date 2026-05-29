@@ -1,4 +1,3 @@
-// Provides functions for user authentication, including logging in and managing the JWT token.
 import client from './client';
 
 export async function login(email, password) {
@@ -6,6 +5,27 @@ export async function login(email, password) {
     email,
     password,
   });
+
+  return response.data;
+}
+
+export async function register(
+  email,
+  password,
+  deviceSecret
+) {
+  const response = await client.post(
+    '/auth/register',
+    {
+      email,
+      password,
+    },
+    {
+      headers: {
+        'X-Device-Secret': deviceSecret,
+      },
+    }
+  );
 
   return response.data;
 }

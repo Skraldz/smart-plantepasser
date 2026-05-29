@@ -8,7 +8,7 @@
 #include <time.h>
 
 #include "config.h"
-#include "rf_protocol.h"
+#include "../rf_protocol.h"
 
 // ── SPI busser ───────────────────────────────────────────────
 // ESP32 har to hardware SPI busser — NRF og SD deler ikke bus

@@ -26,7 +26,7 @@
 #include <Wire.h>
 #include <Adafruit_VEML7700.h>
 
-#include "rf_protocol.h"
+#include "../rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
 #define RF_CE_PIN  9

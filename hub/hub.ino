@@ -10,15 +10,35 @@
 #include "config.h"
 #include "rf_protocol.h"
 
-RF24 radio(4, 5); // CE=4, CSN=5
+// ── SPI busser ───────────────────────────────────────────────
+// ESP32 har to hardware SPI busser — NRF og SD deler ikke bus
+// da SD-modulet ikke frigiver MISO ordentligt efter initialisering
+SPIClass spiNRF(VSPI); // NRF24L01 på VSPI
+SPIClass spiSD(HSPI);  // SD-kort på HSPI
+
+// ── Pin-definitioner ─────────────────────────────────────────
+// NRF24L01 (VSPI)
+#define NRF_CE_PIN  16
+#define NRF_CSN_PIN 17
+#define NRF_SCK     18
+#define NRF_MISO    19
+#define NRF_MOSI    23
+
+// SD-kort (HSPI)
+#define SD_SCK      14
+#define SD_MISO     12
+#define SD_MOSI     13
+// SD_CS_PIN defineres i config.h (G22)
+
+RF24 radio(NRF_CE_PIN, NRF_CSN_PIN);
 
 unsigned long lastSensorPoll = 0;
 unsigned long lastCommandPoll = 0;
 
-const unsigned long SENSOR_POLL_INTERVAL = 60000;
+const unsigned long SENSOR_POLL_INTERVAL  = 60000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
 
-bool sdReady = false;
+bool sdReady          = false;
 bool relayCurrentlyOn = false;
 
 // Settings fra backend — starter med config.h defaults
@@ -32,9 +52,9 @@ struct PlantConfig {
 PlantConfig plantConfigs[4];
 int plantConfigCount = 0;
 
-int luxThresholdLow   = LUX_LOW_THRESHOLD;
-int lightPeriodStart  = LIGHT_PERIOD_START;
-int lightPeriodEnd    = LIGHT_PERIOD_START + 12; // default: 12 timers periode
+int  luxThresholdLow  = LUX_LOW_THRESHOLD;
+int  lightPeriodStart = LIGHT_PERIOD_START;
+int  lightPeriodEnd   = LIGHT_PERIOD_START + 12;
 bool lightEnabled     = true;
 
 void connectWiFi() {
@@ -89,7 +109,8 @@ bool isLightPeriod() {
 
 void setupSD() {
   Serial.println("Starter SD-kort...");
-  if (!SD.begin(SD_CS_PIN)) {
+  spiSD.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS_PIN);
+  if (!SD.begin(SD_CS_PIN, spiSD)) {
     Serial.println("FEJL: SD-kort blev ikke fundet");
     sdReady = false;
     return;
@@ -100,7 +121,8 @@ void setupSD() {
 
 void setupRF() {
   Serial.println("Starter NRF24L01...");
-  if (!radio.begin()) {
+  spiNRF.begin(NRF_SCK, NRF_MISO, NRF_MOSI, NRF_CSN_PIN);
+  if (!radio.begin(&spiNRF)) {
     Serial.println("FEJL: NRF24L01 blev ikke fundet");
     return;
   }
@@ -113,98 +135,76 @@ void setupRF() {
   Serial.println("NRF24L01 klar");
 }
 
-// Henter settings fra backend og opdaterer lokale variabler
 void fetchSettings() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi offline - kan ikke hente settings");
     return;
   }
-
   WiFiClientSecure client;
   client.setInsecure();
-
   HTTPClient http;
   http.begin(client, SETTINGS_URL);
   http.addHeader("X-Device-Secret", DEVICE_SECRET);
-
   Serial.println("Henter settings fra backend...");
-
   int responseCode = http.GET();
-
   Serial.print("GET settings status: ");
   Serial.println(responseCode);
-
   if (responseCode != 200) {
     Serial.print("Kunne ikke hente settings: ");
     Serial.println(http.errorToString(responseCode));
     http.end();
     return;
   }
-
   String response = http.getString();
   Serial.println("Settings svar:");
   Serial.println(response);
-
   DynamicJsonDocument doc(2048);
   DeserializationError error = deserializeJson(doc, response);
-
   if (error) {
     Serial.print("JSON parse fejl: ");
     Serial.println(error.c_str());
     http.end();
     return;
   }
-
-  // Opdater lysindstillinger
   JsonObject light = doc["light"];
-  luxThresholdLow  = light["lux_threshold_low"]  | LUX_LOW_THRESHOLD;
-  lightPeriodStart = light["light_start_hour"]    | LIGHT_PERIOD_START;
-  int period       = light["light_period"]        | 12;
+  luxThresholdLow  = light["lux_threshold_low"] | LUX_LOW_THRESHOLD;
+  lightPeriodStart = light["light_start_hour"]  | LIGHT_PERIOD_START;
+  int period       = light["light_period"]      | 12;
   lightPeriodEnd   = lightPeriodStart + period;
-  lightEnabled     = light["enabled"]             | true;
-
+  lightEnabled     = light["enabled"]           | true;
   Serial.println("Lysindstillinger opdateret:");
   Serial.print("  lux_threshold_low: "); Serial.println(luxThresholdLow);
   Serial.print("  light_start_hour: ");  Serial.println(lightPeriodStart);
   Serial.print("  light_period: ");      Serial.println(period);
   Serial.print("  enabled: ");           Serial.println(lightEnabled);
-
-  // Opdater planteindstillinger
   JsonArray plants = doc["plants"];
   plantConfigCount = 0;
-
   for (JsonObject plant : plants) {
     if (plantConfigCount >= 4) break;
-    plantConfigs[plantConfigCount].plant_idx           = plant["plant_idx"]           | plantConfigCount;
-    plantConfigs[plantConfigCount].soil_threshold      = plant["soil_threshold"]      | SOIL_DRY_THRESHOLD;
-    plantConfigs[plantConfigCount].pump_pwm            = plant["pump_pwm"]            | 100;
+    plantConfigs[plantConfigCount].plant_idx             = plant["plant_idx"]             | plantConfigCount;
+    plantConfigs[plantConfigCount].soil_threshold        = plant["soil_threshold"]        | SOIL_DRY_THRESHOLD;
+    plantConfigs[plantConfigCount].pump_pwm              = plant["pump_pwm"]              | 100;
     plantConfigs[plantConfigCount].watering_duration_sec = plant["watering_duration_sec"] | WATERING_DURATION;
-
     Serial.print("Plante ");
     Serial.print(plantConfigs[plantConfigCount].plant_idx);
     Serial.print(" - threshold: ");
     Serial.print(plantConfigs[plantConfigCount].soil_threshold);
     Serial.print(", duration: ");
     Serial.println(plantConfigs[plantConfigCount].watering_duration_sec);
-
     plantConfigCount++;
   }
-
   Serial.print("Settings hentet for ");
   Serial.print(plantConfigCount);
   Serial.println(" planter");
-
   http.end();
 }
 
-// Hjælpefunktion: find config for en given plant_idx
 PlantConfig getPlantConfig(int plant_idx) {
   for (int i = 0; i < plantConfigCount; i++) {
     if (plantConfigs[i].plant_idx == plant_idx) {
       return plantConfigs[i];
     }
   }
-  // Fallback til defaults hvis planten ikke findes i settings
   PlantConfig fallback;
   fallback.plant_idx             = plant_idx;
   fallback.soil_threshold        = SOIL_DRY_THRESHOLD;
@@ -290,7 +290,7 @@ String buildMeasurementJson(SensorPayload payload) {
   JsonArray plants = doc.createNestedArray("plants");
   for (int i = 0; i < 4; i++) {
     JsonObject plant = plants.createNestedObject();
-    plant["plant_id"]     = i;
+    plant["plant_id"]      = i;
     plant["soil_moisture"] = payload.soil[i];
   }
   doc.createNestedArray("watering_events");
@@ -328,14 +328,14 @@ void sendWateringCommand(uint8_t plantId, uint8_t durationSec, uint8_t pumpPwm =
 
 void sendRelayCommand(uint8_t action) {
   RelayCommand cmd;
-  cmd.action      = action;
+  cmd.action       = action;
   cmd.duration_min = 0;
   radio.stopListening();
   radio.openWritingPipe(RELAY_ADDR);
   bool ok = radio.write(&cmd, sizeof(cmd));
   radio.startListening();
   if (ok) { relayCurrentlyOn = action == 1; Serial.print("RelayCommand sendt. Action: "); Serial.println(action); }
-  else      { Serial.println("FEJL: RelayCommand blev ikke sendt"); }
+  else     { Serial.println("FEJL: RelayCommand blev ikke sendt"); }
 }
 
 void handleThresholds(SensorPayload payload) {
@@ -347,14 +347,12 @@ void handleThresholds(SensorPayload payload) {
       sendWateringCommand((uint8_t)i, (uint8_t)cfg.watering_duration_sec, (uint8_t)cfg.pump_pwm);
     }
   }
-
   if (payload.lux < luxThresholdLow && isLightPeriod()) {
     if (!relayCurrentlyOn) {
       Serial.println("Threshold: lav lux - tænder lampe");
       sendRelayCommand(1);
     }
   }
-
   if (payload.lux >= luxThresholdLow && relayCurrentlyOn) {
     Serial.println("Threshold: lux OK - slukker lampe");
     sendRelayCommand(0);
@@ -448,14 +446,21 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("Starter Smart Plantepasser Hub");
-  SPI.begin(18, 19, 23, 5); // Én gang, før alt andet der bruger SPI
+
+  // Deaktivér begge CS pins før SPI initialisering
+  pinMode(NRF_CSN_PIN, OUTPUT);
+  pinMode(SD_CS_PIN, OUTPUT);
+  digitalWrite(NRF_CSN_PIN, HIGH);
+  digitalWrite(SD_CS_PIN, HIGH);
+  delay(100);
+
   connectWiFi();
   setupTime();
-  setupSD();
-  setupRF();
-  fetchSettings();       // Hent settings fra backend ved opstart
+  setupSD();   // HSPI
+  setupRF();   // VSPI
+  fetchSettings();
   getPendingCommands();
-  // Midlertidig test. Kommentér ud når fysisk sensor er klar.
+  // Midlertidig test — kommentér ud når fysisk sensor er klar
   sendFakePayloadForTest();
 }
 

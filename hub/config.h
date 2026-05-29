@@ -1,7 +1,7 @@
 #pragma once
 
-#define WIFI_SSID "WIFI_NAME"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
+#define WIFI_SSID "FarligFredag"
+#define WIFI_PASSWORD "tissemand"
 
 #define BACKEND_HEALTH_URL "https://plantapi.mandingo.dk/"
 #define BACKEND_URL "https://plantapi.mandingo.dk/api/v1/measurements"
@@ -10,7 +10,7 @@
 
 #define DEVICE_SECRET "DEVICE_SECRET"
 
-#define SD_CS_PIN 15
+#define SD_CS_PIN 22
 
 // Defaults - overskrives af backend settings ved opstart
 #define SOIL_DRY_THRESHOLD 30

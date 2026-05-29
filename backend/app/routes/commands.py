@@ -18,7 +18,7 @@ def activate_water(
     db: Session = Depends(get_db),
     get_current_user: User = Depends(get_current_user)
 ):
-    watering_module = db.query(Modules).filter(Modules.module_type == "watering").first()
+    watering_module = db.query(Modules).filter(Modules.module_type == "pump").first()
     if not watering_module:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watering module not found")
     incoming_command = save_command(db, module_id=watering_module.id, command_type="water", plant_idx=body.plant_idx, duration_sec=body.duration_sec)

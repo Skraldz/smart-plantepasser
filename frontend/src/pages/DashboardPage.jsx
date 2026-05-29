@@ -116,7 +116,10 @@ function DashboardPage() {
       await sendWaterCommand(plants[0].plant_idx, 5);
       await refreshPlants();
 
-      showToast('Watering command sent successfully.', 'success');
+      showToast(
+      'Watering request submitted. Status will update when the hub responds.',
+      'success'
+    );
     } catch (err) {
       console.error(err);
       showToast('Failed to send watering command.', 'error');
@@ -130,10 +133,10 @@ function DashboardPage() {
       await sendRelayCommand(nextRelayAction);
       await refreshPlants();
 
-      const nextStatus = nextRelayAction === 1 ? 'On' : 'Off';
+     // const nextStatus = nextRelayAction === 1 ? 'On' : 'Off';
 
       showToast(
-        `Growth lamp turned ${nextStatus.toLowerCase()}.`,
+        `Lamp command sent. Current status will update when the hub reports back.`,
         'success'
       );
     } catch (err) {

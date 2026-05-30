@@ -139,8 +139,6 @@ void setupRF() {
 }
 
 void fetchSettings() {
-  Serial.print("  relay_state fra JSON: ");
-  Serial.println((int)light["relay_state"]);
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi offline - kan ikke hente settings");
     return;
@@ -178,6 +176,10 @@ void fetchSettings() {
   int period       = light["light_period"]      | 12;
   lightPeriodEnd   = lightPeriodStart + period;
   lightEnabled     = (bool)light["enabled"]           | true;
+
+  Serial.print("  relay_state fra JSON: ");
+  Serial.println((int)light["relay_state"]);
+
   relayCurrentlyOn = (bool)(light["relay_state"] | 0);
   
   Serial.println("Lysindstillinger opdateret:");

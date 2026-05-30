@@ -177,9 +177,10 @@ void fetchSettings() {
   lightPeriodEnd   = lightPeriodStart + period;
   lightEnabled     = light["enabled"]           | true;
   relayCurrentlyOn = (bool)(light["relay_state"] | 0);
-
+  
   Serial.println("Lysindstillinger opdateret:");
   Serial.print("  lux_threshold_low: "); Serial.println(luxThresholdLow);
+  Serial.print("  lux_threshold_high: "); Serial.println(luxThresholdHigh);
   Serial.print("  light_start_hour: ");  Serial.println(lightPeriodStart);
   Serial.print("  light_period: ");      Serial.println(period);
   Serial.print("  enabled: ");           Serial.println(lightEnabled);
@@ -344,6 +345,22 @@ void sendRelayCommand(uint8_t action) {
   else     { Serial.println("FEJL: RelayCommand blev ikke sendt"); }
 }
 
+void updateRelayState(uint8_t state) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  WiFiClientSecure client;
+  client.setInsecure();
+
+  HTTPClient http;
+  String url = String(SETTINGS_URL_BASE) + "/relay_state?relay_action=" + String(state);
+  http.begin(client, url);
+  http.addHeader("X-Device-Secret", DEVICE_SECRET);
+
+  int responseCode = http.PUT("");
+  Serial.print("Relay state opdateret: "); Serial.println(responseCode);
+  http.end();
+}
+
 void handleThresholds(SensorPayload payload) {
   for (int i = 0; i < 4; i++) {
     PlantConfig cfg = getPlantConfig(i);
@@ -357,11 +374,15 @@ void handleThresholds(SensorPayload payload) {
     if (!relayCurrentlyOn) {
       Serial.println("Threshold: lav lux - tænder lampe");
       sendRelayCommand(1);
+      relayCurrentlyOn = true;
+      updateRelayState(1);
     }
   }
   if (payload.lux >= luxThresholdHigh && relayCurrentlyOn) {
     Serial.println("Threshold: lux OK - slukker lampe");
     sendRelayCommand(0);
+    relayCurrentlyOn = false;
+    updateRelayState(0);
   }
 }
 
@@ -377,7 +398,7 @@ void pollSensor() {
   radio.openReadingPipe(1, SENSOR_ADDR);
   radio.startListening();
   unsigned long started = millis();
-  while (!radio.available() && millis() - started < 5000) delay(5);
+  while (!radio.available() && millis() - started < 2000) delay(5);
   if (radio.available()) {
     SensorPayload payload;
     radio.read(&payload, sizeof(payload));

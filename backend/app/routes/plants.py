@@ -82,3 +82,18 @@ def get_light_settings_command(
     if light is None:
         raise HTTPException(status_code=404, detail="Light settings not found")
     return light
+
+@router.put("/relay_state")
+def update_relay_state(
+    relay_action: int,
+    db: Session = Depends(get_db),
+    x_device_secret: str = Header(...)
+):
+    if x_device_secret != DEVICE_SECRET:
+        raise HTTPException(status_code=401, detail="Device Secret does not match")
+    light = db.query(LightSettings).filter(LightSettings.module_id == 3).first()
+    if light is None:
+        raise HTTPException(status_code=404, detail="Settings not found")
+    light.relay_state = relay_action
+    db.commit()
+    return {"status": "ok"}

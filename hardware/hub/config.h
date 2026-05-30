@@ -7,6 +7,7 @@
 #define BACKEND_URL "https://plantapi.mandingo.dk/api/v1/measurements"
 #define COMMANDS_URL "https://plantapi.mandingo.dk/api/v1/commands/pending"
 #define SETTINGS_URL "https://plantapi.mandingo.dk/api/v1/settings?sensor_module_id=1"
+#define SETTINGS_URL_BASE "https://plantapi.mandingo.dk/api/v1"
 
 #define DEVICE_SECRET "spis_mere_ost"
 

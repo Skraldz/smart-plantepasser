@@ -73,6 +73,7 @@ class LightSettingsUpdate(BaseModel):
     light_period: Optional[int] = None
     light_start_hour: Optional[int] = None
     enabled: Optional[int] = None
+    relay_state: Optional[int] = None
 
 class PlantSettings(BaseModel):
     plant_idx: int
@@ -86,6 +87,7 @@ class LightSettingsResponse(BaseModel):
     light_period: int
     light_start_hour: int
     enabled: int
+    relay_state: int = 0
 
 class SettingsResponse(BaseModel):
     plants: List[PlantSettings]

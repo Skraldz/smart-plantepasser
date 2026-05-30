@@ -38,7 +38,7 @@ unsigned long lastSettingsPoll = 0;
 
 const unsigned long SENSOR_POLL_INTERVAL  = 60000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
-const unsigned long SETTINGS_POLL_INTERVAL = 300000;
+const unsigned long SETTINGS_POLL_INTERVAL = 10000;
 
 bool sdReady          = false;
 bool relayCurrentlyOn = false;
@@ -177,7 +177,7 @@ void fetchSettings() {
   lightPeriodEnd   = lightPeriodStart + period;
   lightEnabled     = light["enabled"]           | true;
   relayCurrentlyOn = (bool)(light["relay_state"] | 0);
-  
+
   Serial.println("Lysindstillinger opdateret:");
   Serial.print("  lux_threshold_low: "); Serial.println(luxThresholdLow);
   Serial.print("  light_start_hour: ");  Serial.println(lightPeriodStart);

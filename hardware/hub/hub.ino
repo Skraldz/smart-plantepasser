@@ -139,6 +139,8 @@ void setupRF() {
 }
 
 void fetchSettings() {
+  Serial.print("  relay_state fra JSON: ");
+  Serial.println((int)light["relay_state"]);
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi offline - kan ikke hente settings");
     return;

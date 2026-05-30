@@ -175,7 +175,7 @@ void fetchSettings() {
   lightPeriodStart = light["light_start_hour"]  | LIGHT_PERIOD_START;
   int period       = light["light_period"]      | 12;
   lightPeriodEnd   = lightPeriodStart + period;
-  lightEnabled     = light["enabled"]           | true;
+  lightEnabled     = (bool)light["enabled"]           | true;
   relayCurrentlyOn = (bool)(light["relay_state"] | 0);
   
   Serial.println("Lysindstillinger opdateret:");

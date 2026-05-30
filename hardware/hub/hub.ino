@@ -54,6 +54,7 @@ struct PlantConfig {
 PlantConfig plantConfigs[4];
 int plantConfigCount = 0;
 
+int  luxThresholdHigh = LUX_THRESHOLD_HIGH;
 int  luxThresholdLow  = LUX_LOW_THRESHOLD;
 int  lightPeriodStart = LIGHT_PERIOD_START;
 int  lightPeriodEnd   = LIGHT_PERIOD_START + 12;

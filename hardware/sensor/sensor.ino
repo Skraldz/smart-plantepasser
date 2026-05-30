@@ -150,6 +150,7 @@ void setup() {
 
   // DHT og VEML efter RF
   dht.begin();
+  delay(2000);
   Serial.println("DHT22 klar");
 
   if (!veml.begin()) {

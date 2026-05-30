@@ -20,7 +20,7 @@ def create_user(db: Session, email: str, hashed_password: str):
     db.refresh(new_user)
     return new_user
 
-def save_command(db: Session, module_id: int, command_type: str, plant_idx: int = None, duration_sec: int = None, relay_action: int = None):
+def save_command(db: Session, module_id: int, command_type: str, plant_idx: int = None, duration_sec: int = None, relay_action: int = None, pump_pwm: int = None):
     new_command = Command(
         module_id = module_id,
         command_type = command_type,

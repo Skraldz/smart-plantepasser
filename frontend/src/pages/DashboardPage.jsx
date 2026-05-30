@@ -40,9 +40,9 @@ function DashboardPage() {
 const latestMeasurement = measurements[0];
 
 const lampStatus =
-  lightSettings?.relay_action === 1
+  lightSettings?.relay_state === 1
     ? 'On'
-    : lightSettings?.relay_action === 0
+    : lightSettings?.relay_state === 0
       ? 'Off'
       : 'No data';
           
@@ -165,24 +165,23 @@ const lampStatus =
 // Handler for toggling the growth lamp on or off. 
 // It sends a relay command to the backend and refreshes plant data to reflect the new status.
   async function handleToggleLamp() {
-    try {
-      const nextRelayAction = lampStatus === 'On' ? 0 : 1;
+  try {
+    const nextRelayAction = lampStatus === 'On' ? 0 : 1;
 
-      await sendRelayCommand(nextRelayAction);
-      await refreshPlants();
+    await sendRelayCommand(nextRelayAction);
 
-     // const nextStatus = nextRelayAction === 1 ? 'On' : 'Off';
+    const settings = await getLightSettings(3);
+    setLightSettings(settings);
 
-      showToast(
-        `Lamp command sent. Current status will update when the hub reports back.`,
-        'success'
-      );
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to toggle growth lamp.', 'error');
-    }
+    showToast(
+      'Lamp command sent. Current status will update when the hub reports back.',
+      'success'
+    );
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to toggle growth lamp.', 'error');
   }
-
+}
   // Handler for refreshing sensor data. 
   // It fetches the latest plant data from the backend and updates the dashboard.
   async function handleRefreshSensors() {
@@ -323,7 +322,7 @@ const lampStatus =
           <p className="text-sm text-slate-400">Lamp Status</p>
           <h2 className="mt-3 text-3xl font-bold text-white">{lampStatus}</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Derived from latest backend status data
+            Derived from latest backend status
           </p>
         </div>
 

@@ -81,15 +81,6 @@ function PlantStatusCard({ plant }) {
         <p className="text-sm text-slate-400">
           Lux: {plant.statusData?.lux ?? 'No data'}
         </p>
-
-        <p className="text-sm text-emerald-400">
-          Lamp:{' '}
-          {plant.statusData?.lamp_on == null
-            ? 'No data'
-            : plant.statusData.lamp_on === 1
-              ? 'On'
-              : 'Off'}
-        </p>
       </div>
 
       <button

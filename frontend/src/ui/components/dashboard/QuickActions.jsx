@@ -80,10 +80,6 @@ function QuickActions({
           Toggle growth lamp
         </button>
 
-        <p className="text-sm text-slate-400">
-          Lamp is currently {lampStatus}.
-        </p>
-
         <button
           type="button"
           onClick={() => setIsLightConfigOpen((current) => !current)}
@@ -98,71 +94,63 @@ function QuickActions({
               Light automation
             </h3>
 
-            <div className="mt-4">
-              <label className="mb-2 block text-sm text-slate-300">
-                Low lux threshold
-              </label>
-              <select
-                value={luxLow}
-                onChange={(e) => setLuxLow(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
-              >
-                <option value={50}>50 lux</option>
-                <option value={100}>100 lux</option>
-                <option value={150}>150 lux</option>
-                <option value={200}>200 lux</option>
-                <option value={300}>300 lux</option>
-              </select>
-            </div>
+          <div className="mt-4">
+            <label className="mb-2 block text-sm text-slate-300">
+              Low lux threshold
+            </label>
 
-            <div className="mt-4">
-              <label className="mb-2 block text-sm text-slate-300">
-                High lux threshold
-              </label>
-              <select
-                value={luxHigh}
-                onChange={(e) => setLuxHigh(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
-              >
-                <option value={400}>400 lux</option>
-                <option value={500}>500 lux</option>
-                <option value={600}>600 lux</option>
-                <option value={800}>800 lux</option>
-                <option value={1000}>1000 lux</option>
-              </select>
-            </div>
+            <input
+              type="number"
+              min="0"
+              value={luxLow}
+              onChange={(e) => setLuxLow(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
+            />
+          </div>
 
-            <div className="mt-4">
-              <label className="mb-2 block text-sm text-slate-300">
-                Light period
-              </label>
-              <select
-                value={lightPeriod}
-                onChange={(e) => setLightPeriod(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
-              >
-                <option value={8}>8 hours</option>
-                <option value={12}>12 hours</option>
-                <option value={16}>16 hours</option>
-              </select>
-            </div>
+          <div className="mt-4">
+            <label className="mb-2 block text-sm text-slate-300">
+              High lux threshold
+            </label>
 
-            <div className="mt-4">
-              <label className="mb-2 block text-sm text-slate-300">
-                Start hour
-              </label>
-              <select
-                value={lightStartHour}
-                onChange={(e) => setLightStartHour(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
-              >
-                {Array.from({ length: 24 }, (_, hour) => (
-                  <option key={hour} value={hour}>
-                    {hour.toString().padStart(2, '0')}:00
-                  </option>
-                ))}
-              </select>
-            </div>
+            <input
+              type="number"
+              min="0"
+              value={luxHigh}
+              onChange={(e) => setLuxHigh(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm text-slate-300">
+              Light period (hours)
+            </label>
+
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={lightPeriod}
+              onChange={(e) => setLightPeriod(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm text-slate-300">
+              Start hour
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              max="23"
+              value={lightStartHour}
+              onChange={(e) => setLightStartHour(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus:border-emerald-400"
+            />
+          </div>
 
             <div className="mt-4">
               <label className="mb-2 block text-sm text-slate-300">

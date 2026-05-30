@@ -497,6 +497,10 @@ void setup() {
   setupSD();   // HSPI
   setupRF();   // VSPI
   fetchSettings();
+  // Synkronisér relæ ved opstart — sæt altid til slukket
+  sendRelayCommand(0);
+  relayCurrentlyOn = false;
+  updateRelayState(0);
   getPendingCommands();
   // Midlertidig test — kommentér ud når fysisk sensor er klar
   // sendFakePayloadForTest();

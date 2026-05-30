@@ -34,9 +34,11 @@ RF24 radio(NRF_CE_PIN, NRF_CSN_PIN);
 
 unsigned long lastSensorPoll = 0;
 unsigned long lastCommandPoll = 0;
+unsigned long lastSettingsPoll = 0;
 
 const unsigned long SENSOR_POLL_INTERVAL  = 60000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
+const unsigned long SETTINGS_POLL_INTERVAL = 300000;
 
 bool sdReady          = false;
 bool relayCurrentlyOn = false;
@@ -168,6 +170,7 @@ void fetchSettings() {
   }
   JsonObject light = doc["light"];
   luxThresholdLow  = light["lux_threshold_low"] | LUX_LOW_THRESHOLD;
+  luxThresholdHigh = light["lux_threshold_high"] | LUX_THRESHOLD_HIGH;
   lightPeriodStart = light["light_start_hour"]  | LIGHT_PERIOD_START;
   int period       = light["light_period"]      | 12;
   lightPeriodEnd   = lightPeriodStart + period;
@@ -353,7 +356,7 @@ void handleThresholds(SensorPayload payload) {
       sendRelayCommand(1);
     }
   }
-  if (payload.lux >= luxThresholdLow && relayCurrentlyOn) {
+  if (payload.lux >= luxThresholdHigh && relayCurrentlyOn) {
     Serial.println("Threshold: lux OK - slukker lampe");
     sendRelayCommand(0);
   }
@@ -410,6 +413,7 @@ void getPendingCommands() {
       if (commandType == "water") {
         int plantIdx    = command["plant_idx"];
         int durationSec = command["duration_sec"];
+        int pumpPwm     = command["pump_pwm"] | 100;
         Serial.print("Backend command: vand plante "); Serial.print(plantIdx); Serial.print(" i "); Serial.print(durationSec); Serial.println(" sekunder");
         sendWateringCommand((uint8_t)plantIdx, (uint8_t)durationSec);
       } else if (commandType == "relay") {
@@ -473,5 +477,9 @@ void loop() {
   if (now - lastCommandPoll >= COMMAND_POLL_INTERVAL) {
     lastCommandPoll = now;
     getPendingCommands();
+  }
+  if (now - lastSettingsPoll >= SETTINGS_POLL_INTERVAL) {
+    lastSettingsPoll = now;
+    fetchSettings();
   }
 }

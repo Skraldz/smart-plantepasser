@@ -27,6 +27,7 @@ def save_command(db: Session, module_id: int, command_type: str, plant_idx: int 
         plant_idx = plant_idx,
         duration_sec = duration_sec,
         relay_action = relay_action,
+        pump_pwm = pump_pwm,
         status = "pending"
     )
 

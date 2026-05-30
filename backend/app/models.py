@@ -78,7 +78,8 @@ class Command(Base):
     relay_action = Column(SmallInteger)
     status = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    pump_pwm = Column(Integer)
+    
 class LightSettings(Base):
     __tablename__ = "light_settings"
     id = Column(Integer, primary_key=True)

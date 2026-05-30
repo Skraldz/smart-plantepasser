@@ -1,7 +1,7 @@
 from fastapi import status, APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas import WaterCommand, RelayCommand
+from app.schemas import WaterCommand, RelayCommand, CommandResponse
 from app.crud import save_command, get_pending_commands
 from app.auth import get_current_user
 from app.models import Modules, User
@@ -21,7 +21,7 @@ def activate_water(
     watering_module = db.query(Modules).filter(Modules.module_type == "pump").first()
     if not watering_module:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watering module not found")
-    incoming_command = save_command(db, module_id=watering_module.id, command_type="water", plant_idx=body.plant_idx, duration_sec=body.duration_sec)
+    incoming_command = save_command(db, module_id=watering_module.id, command_type="water", plant_idx=body.plant_idx, duration_sec=body.duration_sec, pump_pwm=body.pump_pwm)
     return {"status": "ok", "command_id": incoming_command.id}
 
 
@@ -37,12 +37,11 @@ def activate_relay(
     incoming_command = save_command(db, module_id=relay_module.id, command_type="relay", relay_action=body.relay_action)
     return {"status": "ok", "command_id": incoming_command.id}
 
-@router.get("/commands/pending")
+@router.get("/commands/pending", response_model=list[CommandResponse])
 def show_pending_commands(
     db: Session = Depends(get_db),
     x_device_secret: str = Header(...)
 ):
     if x_device_secret != DEVICE_SECRET:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Device secret does not match")
-    show_pending = get_pending_commands(db)
-    return show_pending
+    return get_pending_commands(db)

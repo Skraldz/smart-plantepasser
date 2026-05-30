@@ -41,7 +41,8 @@ class MeasurementIn(BaseModel):
 
 class WaterCommand(BaseModel):
     plant_idx: int
-    duration_sec: int
+    duration_sec: int = 5
+    pump_pwm: int = 100
 
 class RelayCommand(BaseModel):
     relay_action: int
@@ -89,3 +90,13 @@ class LightSettingsResponse(BaseModel):
 class SettingsResponse(BaseModel):
     plants: List[PlantSettings]
     light: LightSettingsResponse
+
+class CommandResponse(BaseModel):
+    command_type: str
+    plant_idx: int = None
+    duration_sec: int = None
+    relay_action: int = None
+    pump_pwm: int = None
+
+    class Config:
+        from_attributes = True

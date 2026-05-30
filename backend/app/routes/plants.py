@@ -2,9 +2,9 @@ from fastapi import status, APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.crud import create_plant, update_plant, delete_plant, get_settings, update_light_settings
-from app.schemas import PlantCreate, PlantUpdate, LightSettingsUpdate, PlantSettings, LightSettingsResponse, SettingsResponse
+from app.schemas import PlantCreate, PlantUpdate, LightSettingsUpdate, PlantSettings, LightSettingsResponse, SettingsResponse 
 from app.auth import get_current_user
-from app.models import User
+from app.models import User, LightSettings
 import os
 
 router = APIRouter(prefix="/api/v1", tags=["plants"])
@@ -71,3 +71,14 @@ def update_light_settings_command(
     if incoming_light_update is None:
         raise HTTPException(status_code=404, detail="Settings not found")
     return incoming_light_update
+
+@router.get("/light_settings")
+def get_light_settings_command(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    sensor_module_id: int = 3
+):
+    light = db.query(LightSettings).filter(LightSettings.module_id == sensor_module_id).first()
+    if light is None:
+        raise HTTPException(status_code=404, detail="Light settings not found")
+    return light

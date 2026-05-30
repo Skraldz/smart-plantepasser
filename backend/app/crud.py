@@ -29,11 +29,19 @@ def save_command(db: Session, module_id: int, command_type: str, plant_idx: int 
         relay_action = relay_action,
         pump_pwm = pump_pwm,
         status = "pending"
+       
     )
 
     db.add(new_command)
     db.commit()
     db.refresh(new_command)
+
+    if relay_action is not None:
+        light = db.query(LightSettings).filter(LightSettings.module_id ==3).first()
+        if light:
+            light.relay_state = relay_action
+            db.commit()
+    
     return new_command
 
 # This function takes MeasurementIn from Schemas.py (the pydantic schemas that act with the API) and uses it as data
@@ -200,7 +208,8 @@ def get_settings(db: Session, sensor_module_id: int):
         lux_threshold_high=light.lux_threshold_high,
         light_period=light.light_period,
         light_start_hour=light.light_start_hour,
-        enabled=light.enabled
+        enabled=light.enabled,
+        relay_state=light.relay_state
     )
 
     return SettingsResponse(plants=plant_settings, light=light_response)

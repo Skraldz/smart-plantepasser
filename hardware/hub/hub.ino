@@ -176,6 +176,8 @@ void fetchSettings() {
   int period       = light["light_period"]      | 12;
   lightPeriodEnd   = lightPeriodStart + period;
   lightEnabled     = light["enabled"]           | true;
+  relayCurrentlyOn = (bool)(light["relay_state"] | 0);
+  
   Serial.println("Lysindstillinger opdateret:");
   Serial.print("  lux_threshold_low: "); Serial.println(luxThresholdLow);
   Serial.print("  light_start_hour: ");  Serial.println(lightPeriodStart);
@@ -421,6 +423,7 @@ void getPendingCommands() {
         int relayAction = command["relay_action"];
         Serial.print("Backend command: relay action "); Serial.println(relayAction);
         sendRelayCommand((uint8_t)relayAction);
+        relayCurrentlyOn = relayAction == 1;
       } else {
         Serial.print("Ukendt command type: "); Serial.println(commandType);
       }

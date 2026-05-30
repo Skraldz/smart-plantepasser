@@ -377,7 +377,7 @@ void pollSensor() {
   radio.openReadingPipe(1, SENSOR_ADDR);
   radio.startListening();
   unsigned long started = millis();
-  while (!radio.available() && millis() - started < 2000) delay(5);
+  while (!radio.available() && millis() - started < 5000) delay(5);
   if (radio.available()) {
     SensorPayload payload;
     radio.read(&payload, sizeof(payload));

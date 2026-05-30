@@ -5,6 +5,9 @@ import { useToast } from '../ToastProvider';
 function QuickActions({
   lampStatus,
   systemNotices = [],
+  plants = [],
+  selectedWaterPlantIdx = '',
+  setSelectedWaterPlantIdx = () => {},
   onWateringCycle,
   onToggleLamp,
   onRefreshSensors,
@@ -49,6 +52,20 @@ function QuickActions({
       </p>
 
       <div className="mt-6 space-y-4">
+        <select
+          value={selectedWaterPlantIdx}
+          onChange={(e) => setSelectedWaterPlantIdx(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
+        >
+          <option value="">Choose plant to water</option>
+
+          {plants.map((plant) => (
+            <option key={plant.id} value={plant.plant_idx}>
+              {plant.name} — Pump {plant.plant_idx}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={onWateringCycle}
           className="w-full rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"

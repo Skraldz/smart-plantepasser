@@ -74,6 +74,14 @@ export async function deletePlant(plantIdx, sensorModuleId = 1) {
 
   return response.data;
 }
+export async function getLightSettings(sensorModuleId = 3) {
+  const response = await client.get('/api/v1/light_settings', {
+    params: { sensor_module_id: sensorModuleId },
+  });
+
+  return response.data;
+}
+
 export async function updateLightSettings(sensorModuleId = 3, settings) {
   const response = await client.put('/api/v1/light_settings', settings, {
     params: { sensor_module_id: sensorModuleId },

@@ -1,44 +1,61 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useToast } from '../ui/components/ToastProvider';
-import { usePlants } from '../ui/components/PlantProvider';
-import { useClusters } from '../ui/components/ClusterProvider';
+// Dashboard page showing plant status cards, quick actions, and historical charts.
 
-import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard';
-import QuickActions from '../ui/components/dashboard/QuickActions';
-import HistoryChart from '../ui/components/dashboard/HistoryChart';
+import { useEffect, useState } from 'react'; // React hooks for state and side effects
+import { Link } from 'react-router-dom'; // For navigation links
+import { useToast } from '../ui/components/ToastProvider'; // Custom hook for showing toast notifications
+import { usePlants } from '../ui/components/PlantProvider'; // Custom hook for accessing plant data and actions
+import { useClusters } from '../ui/components/ClusterProvider'; // Custom hook for accessing cluster data and actions
 
+import PlantStatusCard from '../ui/components/dashboard/PlantStatusCard'; // Component to display individual plant status
+import QuickActions from '../ui/components/dashboard/QuickActions'; // Component for displaying quick action buttons and system notices
+import HistoryChart from '../ui/components/dashboard/HistoryChart'; // Component for displaying historical measurement charts
+
+// API functions for fetching measurements and sending commands to the hub
 import {
+  getLightSettings,
   getMeasurements,
   sendRelayCommand,
   sendWaterCommand,
 } from '../api/plantepasserApi';
 
+// Main dashboard page component
 function DashboardPage() {
-  const [measurements, setMeasurements] = useState([]);
-  const [fromHours, setFromHours] = useState(24);
-  const [toHours, setToHours] = useState(0);
+  const [measurements, setMeasurements] = useState([]); // State for historical measurements data
+  const [fromHours, setFromHours] = useState(24); // State for defining the time range for historical data (default to last 24 hours)
+  const [toHours, setToHours] = useState(0); // State for defining the time range for historical data
+  const { showToast } = useToast(); // Function to show toast notifications
+  const { plants, refreshPlants } = usePlants(); // Access plant data and refresh function from PlantProvider
+  const [selectedWaterPlantIdx, setSelectedWaterPlantIdx] = useState(''); // State for tracking which plant is selected for watering in the QuickActions component
+  const [lightSettings, setLightSettings] = useState(null);
 
-  const { showToast } = useToast();
-  const { plants, refreshPlants } = usePlants();
-
+  // Cluster selection state and data
   const {
     clusters,
     selectedClusterId,
     setSelectedClusterId,
   } = useClusters();
 
-  const lampStatus =
-    plants.some((plant) => plant.statusData?.lamp_on === 1)
-      ? 'On'
-      : plants.some((plant) => plant.statusData?.lamp_on === 0)
-        ? 'Off'
-        : 'No data';
+// Determine lamp status from the latest measurement first.
+// If measurements are not available yet, fall back to plant status data.
+const latestMeasurement = measurements[0];
 
+const lampStatus =
+  lightSettings?.relay_action === 1
+    ? 'On'
+    : lightSettings?.relay_action === 0
+      ? 'Off'
+      : 'No data';
+          
+  console.log('Plants:', plants);
+  console.log('Latest measurement:', measurements[0]);
+  console.log('Light settings:', lightSettings);
+
+  // Calculate average soil moisture across all plants that have a valid soil_moisture reading
   const plantsWithMoisture = plants.filter(
     (plant) => plant.statusData?.soil_moisture != null
   );
 
+  // Average moisture is rounded to the nearest whole number. If no plants have moisture data, it will be null.
   const averageMoisture =
     plantsWithMoisture.length > 0
       ? Math.round(
@@ -49,6 +66,7 @@ function DashboardPage() {
         )
       : null;
 
+  // Generate system notices based on plant status and lamp status, displayed in the QuickActions component.
   const systemNotices = [];
 
   plants.forEach((plant) => {
@@ -84,6 +102,7 @@ function DashboardPage() {
     });
   }
 
+  // Effect to refresh plant data every 30 minutes to keep the dashboard up-to-date with the latest sensor readings and statuses.
   useEffect(() => {
     const interval = setInterval(() => {
       refreshPlants();
@@ -92,6 +111,8 @@ function DashboardPage() {
     return () => clearInterval(interval);
   }, [refreshPlants]);
 
+  // Effect to load historical measurements data whenever the selected time range (fromHours, toHours) changes.
+  // This data is used for the HistoryChart component to visualize trends over time.
   useEffect(() => {
     async function loadMeasurements() {
       try {
@@ -103,29 +124,46 @@ function DashboardPage() {
       }
     }
 
+  // Initial load of measurements when the component mounts and whenever the time range changes.
     loadMeasurements();
   }, [showToast, fromHours, toHours]);
 
-  async function handleWateringCycle() {
-    try {
-      if (plants.length === 0) {
-        showToast('No plants available for watering.', 'warning');
-        return;
+  useEffect(() => {
+    async function loadLightSettings() {
+      try {
+        const settings = await getLightSettings(3);
+        setLightSettings(settings);
+      } catch (err) {
+        console.error(err);
       }
+    }
 
-      await sendWaterCommand(plants[0].plant_idx, 5);
-      await refreshPlants();
+    loadLightSettings();
+  }, []);
 
-      showToast(
+// Handler for triggering a watering cycle for the selected plant. 
+// It sends a water command to the backend and refreshes plant data to reflect the new status.
+  async function handleWateringCycle() {
+  try {
+    if (!selectedWaterPlantIdx) {
+      showToast('Choose a plant to water first.', 'warning');
+      return;
+    }
+
+    await sendWaterCommand(Number(selectedWaterPlantIdx), 5);
+    await refreshPlants();
+
+    showToast(
       'Watering request submitted. Status will update when the hub responds.',
       'success'
     );
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to send watering command.', 'error');
-    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to send watering command.', 'error');
   }
-
+}
+// Handler for toggling the growth lamp on or off. 
+// It sends a relay command to the backend and refreshes plant data to reflect the new status.
   async function handleToggleLamp() {
     try {
       const nextRelayAction = lampStatus === 'On' ? 0 : 1;
@@ -145,6 +183,8 @@ function DashboardPage() {
     }
   }
 
+  // Handler for refreshing sensor data. 
+  // It fetches the latest plant data from the backend and updates the dashboard.
   async function handleRefreshSensors() {
     try {
       await refreshPlants();
@@ -155,12 +195,15 @@ function DashboardPage() {
     }
   }
 
+  // Handler for exporting measurement data to a CSV file.
+  // It formats the measurement data into CSV format and triggers a download.
   function handleExportMeasurementsCsv() {
     if (!measurements || measurements.length === 0) {
       showToast('No measurement data available to export.', 'warning');
       return;
     }
-
+  // Flatten the measurements data to create rows for the CSV. 
+  // Each plant reading becomes a separate row with associated measurement data.
     const rows = measurements.flatMap((measurement) => {
       const plantReadings =
         measurement.plants || measurement.soil_readings || [];
@@ -175,12 +218,12 @@ function DashboardPage() {
         lamp_on: measurement.lamp_on ?? '',
       }));
     });
-
+  // If there are no rows to export, show a warning and do not proceed with the CSV generation.
     if (rows.length === 0) {
       showToast('No measurement values available to export.', 'warning');
       return;
     }
-
+  // Define CSV headers and construct the CSV content as a string.
     const headers = [
       'timestamp',
       'plant_id',
@@ -191,6 +234,7 @@ function DashboardPage() {
       'lamp_on',
     ];
 
+  // The CSV string is created by joining the headers and rows with commas and newlines.
     const csv = [
       headers.join(','),
       ...rows.map((row) =>
@@ -198,22 +242,27 @@ function DashboardPage() {
       ),
     ].join('\n');
 
+    // Create a Blob from the CSV string and generate a download link for the user to save the file locally.
     const blob = new Blob([csv], {
       type: 'text/csv;charset=utf-8;',
     });
 
+    // Create a temporary URL for the Blob and trigger a download with a filename that includes the selected time range.
     const url = URL.createObjectURL(blob);
 
+    // Create a temporary anchor element to trigger the download
     const link = document.createElement('a');
     link.href = url;
     link.download = `plant-measurements-${fromHours}-${toHours}.csv`;
     link.click();
 
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url); // Clean up the temporary URL after the download is triggered
 
     showToast('Measurement CSV exported.', 'success');
   }
 
+  // The JSX structure of the dashboard page, including sections for cluster selection, summary cards, plant overview, 
+  // quick actions, and historical charts
   return (
     <div>
       <div className="mb-10">
@@ -332,6 +381,9 @@ function DashboardPage() {
         <QuickActions
           lampStatus={lampStatus}
           systemNotices={systemNotices}
+          plants={plants}
+          selectedWaterPlantIdx={selectedWaterPlantIdx}
+          setSelectedWaterPlantIdx={setSelectedWaterPlantIdx}
           onWateringCycle={handleWateringCycle}
           onToggleLamp={handleToggleLamp}
           onRefreshSensors={handleRefreshSensors}
@@ -427,5 +479,5 @@ function DashboardPage() {
     </div>
   );
 }
-
+// Export the DashboardPage component as the default export of this module.
 export default DashboardPage;

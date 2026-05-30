@@ -27,7 +27,7 @@
 // Sæt til true hvis jeres relæmodul er aktiv-LOW (de fleste billige moduler er det)
 // Aktiv-LOW: LOW signal = relæ tændt, HIGH signal = relæ slukket
 // Sæt til false hvis jeres modul er aktiv-HIGH
-#define RELAY_ACTIVE_LOW true
+#define RELAY_ACTIVE_LOW false
 
 // ── Objekter ─────────────────────────────────────────────────
 RF24 radio(RF_CE_PIN, RF_CSN_PIN);

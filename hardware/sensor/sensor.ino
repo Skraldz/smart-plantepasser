@@ -9,9 +9,13 @@
 //
 // Hardware:
 //   MCU:         Arduino Nano med indbygget NRF24L01
-//   Temp/fugt:   DHT22 → pin D7
+//   Temp/fugt:   DHT22 → pin D2
 //   Lux:         VEML7700 → I2C (A4=SDA, A5=SCL)
 //   Jordfugt:    4x analog sensor → A0, A1, A2, A3
+//
+// OBS: CE og CSN er omvendt af dokumentationen på denne klon!
+//   CE  = D10
+//   CSN = D9
 //
 // Afhængigheder (installer via Arduino Library Manager):
 //   - RF24 by TMRh20
@@ -29,10 +33,10 @@
 #include "rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
-#define RF_CE_PIN  10 // Omvendt af dokumentation!!!
-#define RF_CSN_PIN 9  // Omvendt af dokumentation!!!
+#define RF_CE_PIN  10  // OBS: Omvendt af dokumentation!
+#define RF_CSN_PIN 9   // OBS: Omvendt af dokumentation!
 
-#define DHT_PIN   7
+#define DHT_PIN   2
 #define DHT_TYPE  DHT22
 
 const uint8_t SOIL_PINS[4] = {A0, A1, A2, A3};
@@ -46,21 +50,27 @@ Adafruit_VEML7700 veml;
 
 // ── Sensoraflæsning ──────────────────────────────────────────
 
+// Jordfugt: dummy read for ADC stabilisering, derefter 10 samples → gennemsnit → 0–100%
+// Kalibrerede værdier for dette projekt:
+//   DRY_VAL = 1021 (sensor i tør luft)
+//   WET_VAL = 210  (sensor i vand)
 uint8_t readSoilMoisture(uint8_t pin) {
+  analogRead(pin); // Dummy — stabiliserer ADC multiplexer ved pin-skift
+  delay(10);
   float sum = 0;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     sum += analogRead(pin);
-    delay(1);
   }
-  int avgRaw = (int)(sum / 100.0);
+  int avgRaw = (int)(sum / 10.0);
 
-  const int DRY_VAL = 850;
-  const int WET_VAL = 400;
+  const int DRY_VAL = 1021;
+  const int WET_VAL = 210;
 
   int pct = map(avgRaw, DRY_VAL, WET_VAL, 0, 100);
   return (uint8_t)constrain(pct, 0, 100);
 }
 
+// Lux: enkelt kald til VEML7700, capper til uint16_t
 uint16_t readLux() {
   float lux = veml.readLux(VEML_LUX_AUTO);
   if (lux < 0)     lux = 0;
@@ -83,6 +93,7 @@ SensorPayload buildPayload() {
     payload.soil[i] = readSoilMoisture(SOIL_PINS[i]);
   }
 
+  // DHT22 returnerer NaN ved fejl — erstat med 0
   if (isnan(payload.temperature) || isnan(payload.humidity)) {
     Serial.println("ADVARSEL: DHT22 aflæsning fejlede — sender 0-værdier");
     payload.temperature = 0.0;
@@ -149,8 +160,8 @@ void setup() {
   Serial.println("NRF24L01 klar — lytter efter PollRequest på POLL_ADDR");
 
   // DHT og VEML efter RF
-  dht.begin();
   delay(2000);
+  dht.begin();
   Serial.println("DHT22 klar");
 
   if (!veml.begin()) {
@@ -165,6 +176,8 @@ void setup() {
 }
 
 // ── Loop ──────────────────────────────────────────────────────
+// Modulet er fuldstændig passivt — venter på PollRequest fra hub.
+// Al timing styres udelukkende af hubben.
 void loop() {
   if (radio.available()) {
     PollRequest req;

@@ -4,16 +4,13 @@
 //
 // Hardware:
 //   MCU:     Arduino Nano med indbygget NRF24L01
-//   Pumper:  4x 12V pumpe styret via IRLZ44N MOSFET
+//   Pumper:  2x 12V pumpe styret via IRLZ44N MOSFET
 //            Pump 0 → PWM pin D3
 //            Pump 1 → PWM pin D5
-//            Pump 2 → PWM pin D6
-//            Pump 3 → pin D4 (non-PWM — on/off)
 //
-// OBS om pin D9/CE konflikt:
-//   Nano-klonen med indbygget RF bruger typisk CE=D9, CSN=D10.
-//   D9 er også et PWM-pin, derfor bruges D4 (non-PWM) til pump 3.
-//   Hvis jeres klon bruger CE=D8, kan D9 frigøres til pump 3 med PWM.
+// OBS: CE og CSN er omvendt af dokumentationen på denne klon!
+//   CE  = D10
+//   CSN = D9
 //
 // Afhængigheder (installer via Arduino Library Manager):
 //   - RF24 by TMRh20
@@ -25,39 +22,32 @@
 #include "rf_protocol.h"
 
 // ── Pin-definitioner ─────────────────────────────────────────
-#define RF_CE_PIN   10
-#define RF_CSN_PIN  9
+#define RF_CE_PIN  10  // OBS: Omvendt af dokumentation!
+#define RF_CSN_PIN 9   // OBS: Omvendt af dokumentation!
 
-// PWM-pins til MOSFET-gates (én per pumpe)
-// D3, D5, D6 = PWM. D4 = non-PWM (on/off til pump 3)
-const uint8_t PUMP_PINS[4] = {3, 5, 6, 4};
+#define PUMP_COUNT 2
+const uint8_t PUMP_PINS[PUMP_COUNT] = {3, 5}; // PWM pins
 
 // ── Objekter ─────────────────────────────────────────────────
 RF24 radio(RF_CE_PIN, RF_CSN_PIN);
 
 // ── Pumpestyring ─────────────────────────────────────────────
 
-// Starter én pumpe med PWM-styrke fra WateringCommand
-// D4 understøtter ikke PWM — bruger digitalWrite HIGH i stedet
 void pumpStart(uint8_t plantId, uint8_t pwmValue) {
-  if (plantId > 3) return;
-  uint8_t pin = PUMP_PINS[plantId];
-
-  if (pin == 4) {
-    digitalWrite(pin, HIGH);
-  } else {
-    analogWrite(pin, pwmValue);
+  if (plantId >= PUMP_COUNT) {
+    Serial.print("FEJL: plant_id "); Serial.print(plantId);
+    Serial.println(" findes ikke — kun 2 pumper tilsluttet");
+    return;
   }
-
+  analogWrite(PUMP_PINS[plantId], pwmValue);
   Serial.print("Pumpe "); Serial.print(plantId);
   Serial.print(" startet — PWM: "); Serial.println(pwmValue);
 }
 
 void pumpStop(uint8_t plantId) {
-  if (plantId > 3) return;
-  uint8_t pin = PUMP_PINS[plantId];
-  analogWrite(pin, 0);
-  digitalWrite(pin, LOW);
+  if (plantId >= PUMP_COUNT) return;
+  analogWrite(PUMP_PINS[plantId], 0);
+  digitalWrite(PUMP_PINS[plantId], LOW);
   Serial.print("Pumpe "); Serial.print(plantId); Serial.println(" stoppet");
 }
 
@@ -73,11 +63,6 @@ void executeWateringCommand(WateringCommand cmd) {
   Serial.print("  pump_pwm:     "); Serial.println(cmd.pump_pwm);
   Serial.println("──────────────────────────────────────────");
 
-  if (cmd.plant_id > 3) {
-    Serial.println("FEJL: plant_id > 3 — ignorerer kommando");
-    return;
-  }
-
   switch (cmd.action) {
     case 0: // Stop
       pumpStop(cmd.plant_id);
@@ -89,7 +74,7 @@ void executeWateringCommand(WateringCommand cmd) {
       pumpStop(cmd.plant_id);
       break;
 
-    case 2: // Puls — 500ms
+    case 2: // Puls — 500ms (kalibrering)
       pumpStart(cmd.plant_id, cmd.pump_pwm);
       delay(500);
       pumpStop(cmd.plant_id);
@@ -107,11 +92,15 @@ void setup() {
   delay(1000);
   Serial.println("Starter Vandingsmodul...");
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < PUMP_COUNT; i++) {
     pinMode(PUMP_PINS[i], OUTPUT);
     digitalWrite(PUMP_PINS[i], LOW);
   }
   Serial.println("Pump-pins initialiseret (alle LOW)");
+
+  pinMode(RF_CSN_PIN, OUTPUT);
+  digitalWrite(RF_CSN_PIN, HIGH);
+  delay(100);
 
   if (!radio.begin()) {
     Serial.println("FEJL: NRF24L01 ikke fundet — tjek SPI-forbindelser");

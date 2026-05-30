@@ -93,10 +93,11 @@ class SettingsResponse(BaseModel):
 
 class CommandResponse(BaseModel):
     command_type: str
-    plant_idx: int = None
-    duration_sec: int = None
-    relay_action: int = None
-    pump_pwm: int = None
+    plant_idx: Optional[int] = None
+    duration_sec: Optional[int] = None
+    relay_action: Optional[int] = None
+    pump_pwm: Optional[int] = None
+    duration_min: Optional[int] = None
 
     class Config:
         from_attributes = True

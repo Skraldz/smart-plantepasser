@@ -36,9 +36,9 @@ unsigned long lastSensorPoll = 0;
 unsigned long lastCommandPoll = 0;
 unsigned long lastSettingsPoll = 0;
 
-const unsigned long SENSOR_POLL_INTERVAL  = 60000;
+const unsigned long SENSOR_POLL_INTERVAL  = 30000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
-const unsigned long SETTINGS_POLL_INTERVAL = 10000;
+const unsigned long SETTINGS_POLL_INTERVAL = 60000;
 
 bool sdReady          = false;
 bool relayCurrentlyOn = false;
@@ -362,6 +362,11 @@ void updateRelayState(uint8_t state) {
 }
 
 void handleThresholds(SensorPayload payload) {
+  Serial.print("Lux: ");             Serial.println(payload.lux);
+  Serial.print("luxThresholdLow: "); Serial.println(luxThresholdLow);
+  Serial.print("luxThresholdHigh: ");Serial.println(luxThresholdHigh);
+  Serial.print("relayCurrentlyOn: ");Serial.println(relayCurrentlyOn);
+  Serial.print("isLightPeriod: ");   Serial.println(isLightPeriod());
   for (int i = 0; i < 4; i++) {
     PlantConfig cfg = getPlantConfig(i);
     if (payload.soil[i] < cfg.soil_threshold) {

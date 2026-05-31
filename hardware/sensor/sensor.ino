@@ -48,14 +48,11 @@ RF24 radio(RF_CE_PIN, RF_CSN_PIN);
 DHT dht(DHT_PIN, DHT_TYPE);
 Adafruit_VEML7700 veml;
 
-// ── Sensoraflæsning ──────────────────────────────────────────
+// Sensor readings:
+// Soilmoisture: dummy read for ADC stability, then 10 samples averaged and mapped to 0-100%
 
-// Jordfugt: dummy read for ADC stabilisering, derefter 10 samples → gennemsnit → 0–100%
-// Kalibrerede værdier for dette projekt:
-//   DRY_VAL = 1021 (sensor i tør luft)
-//   WET_VAL = 210  (sensor i vand)
 uint8_t readSoilMoisture(uint8_t pin) {
-  analogRead(pin); // Dummy — stabiliserer ADC multiplexer ved pin-skift
+  analogRead(pin); // Dummy — stabilizes ADC multiple readings
   delay(10);
   float sum = 0;
   for (int i = 0; i < 10; i++) {
@@ -63,8 +60,8 @@ uint8_t readSoilMoisture(uint8_t pin) {
   }
   int avgRaw = (int)(sum / 10.0);
 
-  const int DRY_VAL = 1021;
-  const int WET_VAL = 210;
+  const int DRY_VAL = 1021; // Sensor in dry air
+  const int WET_VAL = 210;  // Sensor in saltwater
 
   int pct = map(avgRaw, DRY_VAL, WET_VAL, 0, 100);
   return (uint8_t)constrain(pct, 0, 100);
@@ -175,9 +172,9 @@ void setup() {
   Serial.println("Sensormodul klar og afventer hub");
 }
 
-// ── Loop ──────────────────────────────────────────────────────
-// Modulet er fuldstændig passivt — venter på PollRequest fra hub.
-// Al timing styres udelukkende af hubben.
+// Loop ────────────────────────────────────────────────────
+// Module is completely passive - awaits poll request from hub.
+// All timing is controlled exclusively by the hub.
 void loop() {
   if (radio.available()) {
     PollRequest req;

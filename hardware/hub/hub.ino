@@ -36,9 +36,9 @@ unsigned long lastSensorPoll = 0;
 unsigned long lastCommandPoll = 0;
 unsigned long lastSettingsPoll = 0;
 
-const unsigned long SENSOR_POLL_INTERVAL  = 30000;
+const unsigned long SENSOR_POLL_INTERVAL  = 300000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
-const unsigned long SETTINGS_POLL_INTERVAL = 60000;
+const unsigned long SETTINGS_POLL_INTERVAL = 10000;
 
 bool sdReady          = false;
 bool relayCurrentlyOn = false;

@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import {
+// This component uses the Recharts library to display a line chart of historical plant data.
+import { useMemo, useState } from 'react'; // React hooks for managing component state and memoizing values
+import { // Recharts components for building the line chart
   CartesianGrid,
   Line,
   LineChart,
@@ -9,6 +10,18 @@ import {
   YAxis,
 } from 'recharts';
 
+// Helper function to parse timestamps from the backend, ensuring they are treated as UTC if no timezone is provided.
+function parseBackendTimestamp(timestamp) {
+  if (!timestamp) return new Date();
+
+  const hasTimezone =
+    timestamp.endsWith('Z') ||
+    /[+-]\d{2}:\d{2}$/.test(timestamp);
+
+  return new Date(hasTimezone ? timestamp : `${timestamp}Z`);
+}
+
+// Custom tick component for the X-axis to display time and date in a more readable format.
 function CustomXAxisTick({ x, y, payload }) {
   const [time, date] = String(payload.value).split('|');
 
@@ -29,6 +42,8 @@ function CustomXAxisTick({ x, y, payload }) {
   );
 }
 
+// The HistoryChart component takes in measurements, plant information, and the history range as props to display a line chartover time.
+// includes options for selecting which metrics to display and how to aggregate the data based on the history range.
 function getPlantReadings(measurement) {
   return (
     measurement.plants ||
@@ -38,6 +53,8 @@ function getPlantReadings(measurement) {
   );
 }
 
+// Helper function to extract soil moisture readings for a specific plant from a measurement,
+//  accounting for different possible data structures and ensuring compatibility with both plant index and plant ID.
 function getSoilMoisture(measurement, selectedPlantIdx, plants) {
   const plantReadings = getPlantReadings(measurement);
 
@@ -60,6 +77,8 @@ function getSoilMoisture(measurement, selectedPlantIdx, plants) {
   return soilReading?.soil_moisture ?? soilReading?.soilMoisture ?? null;
 }
 
+// Helper function to calculate the average of an array of values, ignoring null or undefined values, 
+// and returning null if there are no valid values to average.
 function average(values) {
   const validValues = values.filter((value) => value != null);
 
@@ -71,6 +90,7 @@ function average(values) {
   );
 }
 
+// The main component that renders the history chart, allowing users to select a plant and which metrics to display,
 function HistoryChart({ measurements, plants, historyRange }) {
   const [selectedPlantIdx, setSelectedPlantIdx] = useState(0);
   const [chartMode, setChartMode] = useState('auto');
@@ -82,6 +102,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
     lux: false,
   });
 
+  // Memoized calculation of the chart data based on the measurements, selected plant, and chart mode.
   const chartData = useMemo(() => {
     const shouldAggregateByDay =
       chartMode === 'daily' ||
@@ -89,7 +110,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
 
     if (shouldAggregateByDay) {
       const groupedByDate = measurements.reduce((groups, measurement) => {
-        const dateObject = new Date(measurement.timestamp);
+        const dateObject = parseBackendTimestamp(measurement.timestamp);
 
         const dateKey = dateObject.toLocaleDateString('da-DK', {
           day: '2-digit',
@@ -106,6 +127,8 @@ function HistoryChart({ measurements, plants, historyRange }) {
           };
         }
 
+  // Grouping soil moisture, temperature, humidity, and lux readings by date for averaging later, 
+  // using the getSoilMoisture helper function to extract the relevant soil moisture reading for the selected plant.
         groups[dateKey].soil.push(
           getSoilMoisture(measurement, selectedPlantIdx, plants)
         );
@@ -126,22 +149,25 @@ function HistoryChart({ measurements, plants, historyRange }) {
       }));
     }
 
-    let previousDate = '';
+    let previousDate = ''; // Variable to track the previous date for determining when to show the date label on the X-axis ticks.
 
+    // Mapping the raw measurements to the format needed for the chart, including formatting the time and date for the X-axis.
     return measurements.map((measurement) => {
-      const dateObject = new Date(measurement.timestamp);
+      const dateObject = parseBackendTimestamp(measurement.timestamp);
 
       const time = dateObject.toLocaleTimeString('da-DK', {
         hour: '2-digit',
         minute: '2-digit',
       });
 
+      // Format the date for display on the X-axis, and determine whether to show the date label based on whether it has changed from the previous measurement.
       const date = dateObject.toLocaleDateString('da-DK', {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
       });
 
+      // If the date has changed from the previous measurement, include it in the time string for the X-axis tick; otherwise, only show the time.
       const shouldShowDate = date !== previousDate;
       previousDate = date;
 
@@ -154,6 +180,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
           hour: '2-digit',
           minute: '2-digit',
         }),
+        // Extract the soil moisture reading for the selected plant using the helper function.
         soil: getSoilMoisture(measurement, selectedPlantIdx, plants),
         temperature: measurement.temperature ?? null,
         humidity: measurement.humidity ?? null,
@@ -162,6 +189,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
     });
   }, [measurements, selectedPlantIdx, plants, historyRange, chartMode]);
 
+  // Function to toggle the visibility of a specific metric on the chart by updating the selectedMetrics state.
   function toggleMetric(metric) {
     setSelectedMetrics((current) => ({
       ...current,
@@ -169,6 +197,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
     }));
   }
 
+  // If there are no measurements available, display a message indicating that historical data is not yet available.
   if (!measurements || measurements.length === 0) {
     return (
       <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 text-slate-400">
@@ -177,6 +206,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
     );
   }
 
+  // The main JSX structure of the HistoryChart component, including the header, plant and chart mode selectors, metric toggles, and the line chart itself.
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -256,6 +286,7 @@ function HistoryChart({ measurements, plants, historyRange }) {
             <XAxis
               dataKey="time"
               tick={<CustomXAxisTick />}
+              
               interval="preserveStartEnd"
               minTickGap={40}
               height={86}
@@ -331,4 +362,5 @@ function HistoryChart({ measurements, plants, historyRange }) {
   );
 }
 
+// Exporting the HistoryChart component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default HistoryChart;

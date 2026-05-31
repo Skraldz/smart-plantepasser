@@ -1,9 +1,13 @@
+/* RegisterPlantPage.jsx defines the RegisterPlantPage component, rendering a form for users to register a new plant in their cluster. 
+It allows users to input plant details such as name, species, location, and notes, and handles form submission by sending the data to the backend API. 
+The component also provides feedback to the user through toast notifications based on the success or failure of the registration process. */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../ui/components/ToastProvider';
-import { useClusters } from '../ui/components/ClusterProvider';
-import { createPlant } from '../api/plantepasserApi';
+import { useClusters } from '../ui/components/ClusterProvider'; // Custom hook for accessing cluster-related state and functions
+import { createPlant } from '../api/plantepasserApi'; // Importing the createPlant function from the plantepasser API to handle plant creation requests to the backend
 
+// The RegisterPlantPage component renders a form for registering a new plant
 function RegisterPlantPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -21,9 +25,11 @@ function RegisterPlantPage() {
   const [notes, setNotes] = useState('');
   const [plantIdx, setPlantIdx] = useState(0);
 
+  // Handles form submission by calling the createPlant API function and managing the registration flow 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    // Constructing the plant data object to be sent to the backend API for creating a new plant
     try {
       const plantData = {
         plant_idx: Number(plantIdx),
@@ -36,6 +42,7 @@ function RegisterPlantPage() {
         watering_duration_sec: 5,
       };
 
+      // Calling the createPlant function from the plantepasser API to send the plant data to the backend and create a new plant entry
       await createPlant(selectedCluster.sensorModuleId, plantData);
 
       showToast('Plant registered successfully.', 'success');
@@ -43,6 +50,7 @@ function RegisterPlantPage() {
     } catch (err) {
       console.error(err);
 
+      // Handling specific error case where a plant already exists at the selected plant position, and providing user feedback through a toast notification
       if (err.response?.status === 409) {
         showToast(
           'A plant already exists at this plant position.',
@@ -55,6 +63,7 @@ function RegisterPlantPage() {
     }
   }
 
+  // The JSX structure of the register plant page, including a form for user input and selection of cluster and plant position.
   return (
     <div>
       <div className="mb-10">
@@ -182,5 +191,5 @@ function RegisterPlantPage() {
     </div>
   );
 }
-
+// Exporting the RegisterPlantPage component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default RegisterPlantPage;

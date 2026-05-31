@@ -7,7 +7,7 @@ function Toast({ message, type = 'info', onClose }) {
     warning: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-300',
     error: 'border-red-400/30 bg-red-500/10 text-red-300',
   };
-
+// The Toast component is a reusable UI component that displays a temporary message to the user
   return (
     <div
       className={`pointer-events-auto w-full max-w-sm rounded-2xl border px-5 py-4 shadow-2xl backdrop-blur-md ${styles[type]}`}
@@ -25,5 +25,4 @@ function Toast({ message, type = 'info', onClose }) {
     </div>
   );
 }
-
 export default Toast;

@@ -1,35 +1,40 @@
-import { useState } from 'react';
+// SettingsPage.jsx defines the SettingsPage component, which serves as a central hub for managing various user settings
+import { useState } from 'react'; // React hook for managing component state
 import { useClusters } from '../ui/components/ClusterProvider';
 import { useToast } from '../ui/components/ToastProvider';
 
+// The SettingsPage component renders different sections for managing clusters, account settings, connected hub information, product key, and preferences.
 function SettingsPage() {
   const { clusters, addCluster } = useClusters();
   const { showToast } = useToast();
 
-  const [clusterName, setClusterName] = useState('');
-  const [clusterDescription, setClusterDescription] = useState('');
+  const [clusterName, setClusterName] = useState(''); // State for managing the cluster name input
+  const [clusterDescription, setClusterDescription] = useState(''); // State for managing the cluster description input
 
+  // Handles the form submission for adding a new cluster, including validation and updating the cluster state through the addCluster function from the ClusterProvider context.
   function handleAddCluster(e) {
     e.preventDefault();
 
-    if (!clusterName.trim()) {
+    if (!clusterName.trim()) { // Validating that the cluster name is not empty before allowing the addition of a new cluster
       showToast('Cluster name is required.', 'warning');
       return;
     }
 
-    addCluster({
+    addCluster({ // Adding a new cluster to the state with the provided name and description, and generating a sensor module ID based on the current number of clusters.
       name: clusterName,
       description:
         clusterDescription || 'Concept cluster for a future hub setup.',
       sensorModuleId: clusters.length + 1,
     });
 
-    setClusterName('');
-    setClusterDescription('');
+    setClusterName(''); // Resetting the cluster name input field after successfully adding a new cluster
+    setClusterDescription(''); // Resetting the cluster description input field after successfully adding a new cluster
 
     showToast('Concept cluster added.', 'success');
   }
 
+  // The JSX structure of the settings page, including sections for cluster management, account settings, connected hub information, product key, and preferences. 
+  // Each section contains placeholder content and forms for user interaction, with styling applied for a cohesive design.
   return (
     <div>
       <div className="mb-10">

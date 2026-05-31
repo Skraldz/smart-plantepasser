@@ -1,5 +1,4 @@
 // Dashboard page showing plant status cards, quick actions, and historical charts.
-
 import { useEffect, useState } from 'react'; // React hooks for state and side effects
 import { Link } from 'react-router-dom'; // For navigation links
 import { useToast } from '../ui/components/ToastProvider'; // Custom hook for showing toast notifications

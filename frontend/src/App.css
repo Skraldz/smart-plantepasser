@@ -1,4 +1,7 @@
-.counter {
+/* This file contains the CSS styles for the App component, 
+defining the layout and appearance of various elements such as the counter, hero section, next steps, and toast notifications. */
+
+.counter { /* Styles for the counter element, which is a button that displays the current count and allows users to increment it. */
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
@@ -17,7 +20,7 @@
   }
 }
 
-.hero {
+.hero { /* Styles for the hero section, which is the main visual area of the app that typically contains a logo or key information. */
   position: relative;
 
   .base,
@@ -27,18 +30,18 @@
     margin: 0 auto;
   }
 
-  .base {
+  .base { /* Styles for the base element within the hero section, typically representing the main logo or visual element. */
     width: 170px;
     position: relative;
     z-index: 0;
   }
 
   .framework,
-  .vite {
+  .vite { /* Styles for the framework and vite elements within the hero section, which are positioned absolutely to create a layered effect with the base element. */
     position: absolute;
   }
 
-  .framework {
+  .framework { /* Styles for the framework element, which is positioned above the base element and transformed to create a 3D effect. */
     z-index: 1;
     top: 34px;
     height: 28px;
@@ -46,7 +49,7 @@
       scale(1.4);
   }
 
-  .vite {
+  .vite { /* Styles for the vite element, which is positioned below the base element and transformed to create a 3D effect. */
     z-index: 0;
     top: 107px;
     height: 26px;
@@ -56,7 +59,7 @@
   }
 }
 
-#center {
+#center { /* Styles for the center element, which is a container that centers its content and provides spacing between elements. */
   display: flex;
   flex-direction: column;
   gap: 25px;
@@ -70,7 +73,7 @@
   }
 }
 
-#next-steps {
+#next-steps { /* Styles for the next steps section, which provides links to documentation and other resources for users to explore after using the app. */
   display: flex;
   border-top: 1px solid var(--border);
   text-align: left;
@@ -83,7 +86,7 @@
     }
   }
 
-  .icon {
+  .icon { /* Styles for the icon elements within the next steps section, which are small visual indicators that accompany the links to documentation and resources. */
     margin-bottom: 16px;
     width: 22px;
     height: 22px;
@@ -95,7 +98,7 @@
   }
 }
 
-#docs {
+#docs { /* Styles for the docs element, which is a container within the next steps section that provides links to documentation and resources. */
   border-right: 1px solid var(--border);
 
   @media (max-width: 1024px) {
@@ -104,7 +107,7 @@
   }
 }
 
-#next-steps ul {
+#next-steps ul { /* Styles for the unordered list within the next steps section, which contains the individual links to documentation and resources. */
   list-style: none;
   padding: 0;
   display: flex;
@@ -153,7 +156,7 @@
   }
 }
 
-#spacer {
+#spacer { /* Styles for the spacer element, which is a simple horizontal line that provides visual separation between sections of the app. */
   height: 88px;
   border-top: 1px solid var(--border);
   @media (max-width: 1024px) {
@@ -161,7 +164,7 @@
   }
 }
 
-.ticks {
+.ticks { /* Styles for the ticks element, which is a container for the toast notification messages that appear at the top of the app. */
   position: relative;
   width: 100%;
 
@@ -173,11 +176,11 @@
     border: 5px solid transparent;
   }
 
-  &::before {
+  &::before { /* Styles for the before pseudo-element of the ticks element, which creates a small triangle pointing upwards to visually connect the toast notification to the top of the app. */
     left: 0;
     border-left-color: var(--border);
   }
-  &::after {
+  &::after { /* Styles for the after pseudo-element of the ticks element, which creates a small triangle pointing upwards to visually connect the toast notification to the top of the app. */
     right: 0;
     border-right-color: var(--border);
   }

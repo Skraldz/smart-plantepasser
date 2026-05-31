@@ -1,7 +1,10 @@
+// This component provides quick action buttons for manual controls and shortcuts related to plant care
+// It includes options for starting a watering cycle, toggling the growth lamp, configuring light automation settings, and refreshing sensor data.
 import { useState } from 'react';
 import { updateLightSettings } from '../../../api/plantepasserApi';
 import { useToast } from '../ToastProvider';
 
+// The QuickActions component takes various props for managing lamp status, system notices, plant information, and action handlers
 function QuickActions({
   lampStatus,
   systemNotices = [],
@@ -12,16 +15,16 @@ function QuickActions({
   onToggleLamp,
   onRefreshSensors,
 }) {
-  const { showToast } = useToast();
-
-  const [isLightConfigOpen, setIsLightConfigOpen] = useState(false);
-  const [luxLow, setLuxLow] = useState(150);
+  const { showToast } = useToast(); // Custom hook for displaying toast notifications to the user
+  const [isLightConfigOpen, setIsLightConfigOpen] = useState(false); // State for managing the visibility of the light configuration section
+  const [luxLow, setLuxLow] = useState(150); //
   const [luxHigh, setLuxHigh] = useState(600);
-  const [lightPeriod, setLightPeriod] = useState(16);
+  const [lightPeriod, setLightPeriod] = useState(16); 
   const [lightStartHour, setLightStartHour] = useState(6);
   const [lightEnabled, setLightEnabled] = useState(1);
-  const [isSavingLight, setIsSavingLight] = useState(false);
+  const [isSavingLight, setIsSavingLight] = useState(false); // State for managing the saving state of the light configuration settings
 
+  // Function to handle saving the light automation settings, including making an API call to update the settings
   async function handleSaveLightSettings() {
     try {
       setIsSavingLight(true);
@@ -43,6 +46,7 @@ function QuickActions({
     }
   }
 
+  // The JSX structure of the QuickActions component, including buttons for manual controls and a section for system notices.
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-lg">
       <h2 className="text-2xl font-semibold text-white">Quick Actions</h2>
@@ -210,4 +214,5 @@ function QuickActions({
   );
 }
 
+// Exporting the QuickActions component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default QuickActions;

@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../api/auth';
+// RegisterPage.jsx defines the RegisterPage component, which renders the registration interface for new users to create an account.
+import { useState } from 'react'; // React hook for managing component state
+import { Link, useNavigate } from 'react-router-dom'; // Link for navigation between routes, useNavigate for programmatic navigation
+import { register } from '../api/auth'; // Importing the register function from the auth API to handle user registration
 
 import backgroundImage from '../assets/g1.background.jpg';
 import electronicslogo from '../assets/g1.electronics.hvid.png';
 
+/*This component renders the registration page,
+It uses the register function from the auth API to send the registration data to the backend, and handles success and error cases.*/
 function RegisterPage() {
   const navigate = useNavigate();
 
@@ -15,6 +18,7 @@ function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Handles form submission by calling the register API function and managing the registration flow
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
@@ -46,6 +50,7 @@ function RegisterPage() {
     }
   }
 
+  // The JSX structure of the registration page, including a background image, a logo, and a form for user input.
   return (
     <div
       className="relative flex min-h-screen items-center justify-center bg-cover bg-center px-6"
@@ -149,4 +154,5 @@ function RegisterPage() {
   );
 }
 
+// Exporting the RegisterPage component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default RegisterPage;

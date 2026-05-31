@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+// NotFoundPage.jsx defines the NotFoundPage component, renders a 404 Not Found page when a user navigates to a route that does not exist.
+import { Link } from 'react-router-dom'; // Link component from react-router-dom for navigation between routes
 import backgroundImage from '../assets/g1.background.jpg';
 import electronicslogo from '../assets/g1.electronics.hvid.png';
 
@@ -32,4 +33,5 @@ function NotFoundPage() {
   );
 }
 
-export default NotFoundPage;
+// Exporting the NotFoundPage component as the default export of this module, allowing it to be imported and used in other parts of the application.
+export default NotFoundPage; //

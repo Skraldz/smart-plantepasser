@@ -1,37 +1,46 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+/*PlantsPage.jsx defines the PlantsPage component, which renders a page displaying a list of registered plants,
+ allowing users to view, edit, and delete plant information.*/
+import { useEffect, useState } from 'react'; // React hooks for managing component state and side effects
+import { Link } from 'react-router-dom'; // Link component from react-router-dom for navigation between routes
+// Importing API functions for interacting with the backend to manage plants
 import {
   deletePlant,
   getPlants,
   updatePlant,
 } from '../api/plantepasserApi';
-import { useToast } from '../ui/components/ToastProvider';
-import { usePlants } from '../ui/components/PlantProvider';
 
+import { useToast } from '../ui/components/ToastProvider'; // Custom hook for showing toast notifications to the user
+import { usePlants } from '../ui/components/PlantProvider'; // Custom hook for accessing and managing plant data across the application
+
+// This component renders the PlantsPage, which displays a list of registered plants and allows the user to view, edit, and delete them.
 function PlantsPage() {
-  const { showToast } = useToast();
-  const { refreshPlants } = usePlants();
+  const { showToast } = useToast(); // Destructuring the showToast function from the useToast hook to display notifications
+  const { refreshPlants } = usePlants(); // Destructuring the refreshPlants function from the usePlants hook to refresh the plant data after updates
 
-  const [plants, setPlants] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [editingPlantIdx, setEditingPlantIdx] = useState(null);
-  const [editForm, setEditForm] = useState({
+  const [plants, setPlants] = useState([]); // State variable to hold the list of plants fetched from the backend
+  const [isLoading, setIsLoading] = useState(true); // State variable to track whether the plant data is currently being loaded
+  const [error, setError] = useState(''); // State variable to hold any error messages that occur during data fetching or manipulation
+  const [editingPlantIdx, setEditingPlantIdx] = useState(null); // State variable to track which plant is currently being edited, identified by its plant index
+  
+  // State variable to hold the form data for editing a plant's details, initialized with empty values
+  const [editForm, setEditForm] = useState({ 
     name: '',
     type: '',
     location: '',
     note: '',
   });
 
+  // useEffect hook to load the plant data from the backend when the component mounts. 
+  // It defines an async function loadPlants that fetches the plants and updates the state accordingly, handling loading and error states.
   useEffect(() => {
     async function loadPlants() {
       try {
         setIsLoading(true);
         setError('');
 
-        const data = await getPlants(1);
-        setPlants(data);
-      } catch (err) {
+        const data = await getPlants(1); // Fetching the list of plants for sensor module ID 1 from the backend API
+        setPlants(data); // Updating the plants state variable with the fetched data
+      } catch (err) { 
         console.error(err);
         setError('Could not load plants from backend.');
         showToast('Could not load plants from backend.', 'error');
@@ -40,9 +49,11 @@ function PlantsPage() {
       }
     }
 
-    loadPlants();
+    loadPlants(); // Calling the loadPlants function to initiate the data fetching when the component mounts
   }, [showToast]);
 
+  /*Function to start editing a plant,
+   which sets the editingPlantIdx to the plant's index and populates the editForm state with the plant's current details.*/
   function startEditingPlant(plant) {
     setEditingPlantIdx(plant.plant_idx);
     setEditForm({
@@ -53,6 +64,7 @@ function PlantsPage() {
     });
   }
 
+  // Function to cancel editing a plant, which resets the editingPlantIdx and clears the editForm state.
   function cancelEditingPlant() {
     setEditingPlantIdx(null);
     setEditForm({
@@ -63,6 +75,7 @@ function PlantsPage() {
     });
   }
 
+  // Function to save the edited plant details, which updates the plant in the backend and refreshes the plant list.
   async function handleSavePlant(plant) {
     try {
       await updatePlant(
@@ -75,7 +88,7 @@ function PlantsPage() {
           note: editForm.note,
         }
       );
-
+      // Optimistically update the plant in the local state before refreshing from the backend
       setPlants((currentPlants) =>
         currentPlants.map((currentPlant) =>
           currentPlant.plant_idx === plant.plant_idx
@@ -86,7 +99,7 @@ function PlantsPage() {
             : currentPlant
         )
       );
-
+      // Refresh the plant list from the backend to ensure we have the latest data after the update
       await refreshPlants();
 
       showToast(`${editForm.name} updated successfully.`, 'success');
@@ -97,11 +110,13 @@ function PlantsPage() {
     }
   }
 
+  /*Function to handle deleting a plant, which confirms the action with the user, 
+   deletes the plant from the backend, and refreshes the plant list. */
   async function handleDeletePlant(plantIdx, sensorModuleId, name) {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${name}?`
     );
-
+  
     if (!confirmed) return;
 
     try {
@@ -120,6 +135,9 @@ function PlantsPage() {
     }
   }
 
+  /* The JSX structure of the PlantsPage, 
+  which includes a header, a link to register a new plant, and conditional rendering for loading state, error messages, 
+  and the list of plants with edit and delete options. */
   return (
     <div>
       <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -308,4 +326,6 @@ function PlantsPage() {
   );
 }
 
+/*Exporting the PlantsPage component as the default export of this module, 
+ allowing it to be imported and used in other parts of the application. */
 export default PlantsPage;

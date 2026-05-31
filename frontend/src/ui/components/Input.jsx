@@ -4,11 +4,12 @@ export default function Input({
   label,
   type = 'text',
   value,
-  onChange, //function to handle input changes, passed as a prop
+  onChange, // Function to handle input changes, passed as a prop
   placeholder = '',
   disabled = false,
   name,
 }) {
+  // The component renders a label (if provided) and an input field with the specified properties and styling.
   return (
     <div className="space-y-2">
       {label && (

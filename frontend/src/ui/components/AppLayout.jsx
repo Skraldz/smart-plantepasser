@@ -1,14 +1,20 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+// This component defines the main layout of the application, including the header with navigation links and logout button, 
+// as well as a main content area where different pages will be rendered based on the current route. 
+// It uses React Router's NavLink for navigation and Outlet for rendering child routes.
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'; // React Router components for navigation and rendering child routes
 import electronicslogo from '../../assets/g1.electronics.hvid.png';
 
+// The AppLayout component serves as the main layout for the application, providing a consistent header and navigation across different pages.
 function AppLayout() {
   const navigate = useNavigate();
 
+  // Function to handle user logout by removing the authentication token from local storage and navigating to the login page.
   function handleLogout() {
     localStorage.removeItem('token');
     navigate('/login');
   }
 
+  // Function to determine the CSS classes for navigation links based on whether they are active or not, providing visual feedback to the user about the current page.
   const navLinkClass = ({ isActive }) =>
     `rounded-xl px-4 py-2 text-sm font-medium transition ${
       isActive
@@ -16,6 +22,7 @@ function AppLayout() {
         : 'border border-white/10 bg-slate-900 text-white hover:bg-slate-800'
     }`;
 
+  // The JSX structure of the AppLayout component, including the header with navigation links and the main content area where child routes will be rendered.
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <header className="border-b border-white/10 bg-slate-950/95 backdrop-blur">
@@ -74,4 +81,5 @@ function AppLayout() {
   );
 }
 
+// Exporting the AppLayout component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default AppLayout;

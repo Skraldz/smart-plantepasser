@@ -1,3 +1,5 @@
+/* index.css is the main stylesheet for the application, which imports Tailwind CSS 
+ and defines global styles for the app, including font, text color, background color, and box-sizing for all elements. */
 @import "tailwindcss";
 
 /* Define root-level styles for the application, including font, text color, and background color */

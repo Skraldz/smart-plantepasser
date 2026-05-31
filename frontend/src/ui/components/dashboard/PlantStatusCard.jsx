@@ -1,28 +1,32 @@
-import { useState } from 'react';
-import { updatePlant } from '../../../api/plantepasserApi';
+// This component displays the current status of a plant, including latest sensor readings and configuration settings for automated watering. 
+// It allows users to view and configure thresholds for watering system to activate based on soil moisture levels. 
+import { useState } from 'react'; // React hook for managing component state
+import { updatePlant } from '../../../api/plantepasserApi'; // API function for updating plant settings
 import { useToast } from '../ToastProvider';
-import { usePlants } from '../PlantProvider';
+import { usePlants } from '../PlantProvider'; // Custom hook for accessing plant data and actions from the PlantProvider context
 
+// The PlantStatusCard component takes a plant object as a prop and displays its current status and configuration options for automated watering.
 function PlantStatusCard({ plant }) {
   const { showToast } = useToast();
   const { refreshPlants } = usePlants();
 
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false); // State for managing the visibility of the configuration section
 
-  const [soilThreshold, setSoilThreshold] = useState(
+  const [soilThreshold, setSoilThreshold] = useState( // State for managing the soil moisture threshold setting
     plant.soil_threshold ?? 30
   );
 
-  const [pumpPwm, setPumpPwm] = useState(
+  const [pumpPwm, setPumpPwm] = useState( // State for managing the pump PWM setting
     plant.pump_pwm ?? 100
   );
 
-  const [wateringDuration, setWateringDuration] = useState(
+  const [wateringDuration, setWateringDuration] = useState( // State for managing the watering duration setting
     plant.watering_duration_sec ?? 5
   );
 
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // State for managing the saving state of the configuration settings
 
+  // Function to handle saving the configuration settings
   async function handleSaveSettings() {
     try {
       setIsSaving(true);
@@ -48,6 +52,7 @@ function PlantStatusCard({ plant }) {
     }
   }
 
+  // The JSX structure of the PlantStatusCard component, including the display of plant information, sensor readings, and the configuration section for automated watering settings.
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
       <h3 className="text-lg font-semibold text-white">
@@ -169,4 +174,5 @@ function PlantStatusCard({ plant }) {
   );
 }
 
+// Exporting the PlantStatusCard component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default PlantStatusCard;

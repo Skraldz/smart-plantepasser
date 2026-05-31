@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import backgroundImage from '../assets/g1.background.jpg';
+// LoginPage.jsx defines the LoginPage component, rendering the login interface.
+import { useState } from 'react'; // React hook for managing component state
+import { Link, useNavigate } from 'react-router-dom'; // Link for navigation between routes, useNavigate for programmatic navigation
+import backgroundImage from '../assets/g1.background.jpg'; //
 import electronicslogo from '../assets/g1.electronics.hvid.png';
-import { login } from '../api/auth';
+import { login } from '../api/auth'; // Importing the login function from the auth API to handle user authentication
 
 /* This component renders the login page, allowing users to enter their email and password to authenticate. 
 It uses the login function from the auth API to send the credentials to the backend, and handles success and error cases. */
@@ -23,6 +24,7 @@ including storing the JWT token and navigating to the dashboard on success, or d
     setError('');
     setLoading(true);
 
+    // Attempt to log in with the provided email and password
     try {
       const data = await login(email, password);
       localStorage.setItem('token', data.access_token);
@@ -108,4 +110,5 @@ including storing the JWT token and navigating to the dashboard on success, or d
   );
 }
 
+// Exporting the LoginPage component as the default export of this module, allowing it to be imported and used in other parts of the application.
 export default LoginPage;

@@ -25,7 +25,7 @@
 #define RF_CE_PIN  10  // OBS: Omvendt af dokumentation!
 #define RF_CSN_PIN 9   // OBS: Omvendt af dokumentation!
 
-#define PUMP_COUNT 2
+#define PUMP_COUNT 2 // Amount of pumps connected to the system
 const uint8_t PUMP_PINS[PUMP_COUNT] = {3, 5}; // PWM pins
 
 // ── Objekter ─────────────────────────────────────────────────
@@ -90,13 +90,13 @@ void executeWateringCommand(WateringCommand cmd) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Starter Vandingsmodul...");
+  Serial.println("Starting watering module...");
 
   for (int i = 0; i < PUMP_COUNT; i++) {
     pinMode(PUMP_PINS[i], OUTPUT);
     digitalWrite(PUMP_PINS[i], LOW);
   }
-  Serial.println("Pump-pins initialiseret (alle LOW)");
+  Serial.println("Pump-pins initialized (all LOW)");
 
   pinMode(RF_CSN_PIN, OUTPUT);
   digitalWrite(RF_CSN_PIN, HIGH);

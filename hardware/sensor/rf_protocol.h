@@ -4,26 +4,26 @@
 // Kommunikationsflow:
 //   Hub → Sensor:          PollRequest     (POLL_ADDR)
 //   Sensor → Hub:          SensorPayload   (SENSOR_ADDR)
-//   Hub → Vandingsmodul:   WateringCommand (WATERING_ADDR)
-//   Hub → Relæmodul:       RelayCommand    (RELAY_ADDR)
+//   Hub → Pump module:     WateringCommand (WATERING_ADDR)
+//   Hub → Relay module:    RelayCommand    (RELAY_ADDR)
 //
-// __attribute__((packed)) sikrer identisk struct-layout på tværs af
-// ESP32 (Xtensa/ARM) og AVR (ATmega328P) — uden dette kan padding-
-// forskelle mellem platformene korruptere data i RF-pakker.
+// __attribute__((packed)) Ensures identical struct layout across
+// ESP32 (Xtensa/ARM) and AVR (ATmega328P) — without this, padding
+// differences between platforms can corrupt data in RF packets.
 
 #define RF_CHANNEL    76
-#define SENSOR_ADDR   0xF0F0F0F0E1LL   // Sensor → Hub
-#define WATERING_ADDR 0xF0F0F0F0D2LL   // Hub → Vandingsmodul
-#define RELAY_ADDR    0xF0F0F0F0C3LL   // Hub → Relæmodul
-#define POLL_ADDR     0xF0F0F0F0B4LL   // Hub → Sensor (poll)
+#define SENSOR_ADDR   0xF0F0F0F0E1LL   // Sensor  >> Hub
+#define WATERING_ADDR 0xF0F0F0F0D2LL   // Hub     >> Pump module
+#define RELAY_ADDR    0xF0F0F0F0C3LL   // Hub     >> Relay module
+#define POLL_ADDR     0xF0F0F0F0B4LL   // Hub     >> Sensor (poll)
 
-// Hub sender denne struct til sensor for at anmode om måling
+// Hub request poll for sensor readings:
 struct __attribute__((packed)) PollRequest {
-  uint8_t sensor_module_id;  // Hvilken sensor hubben poller (0 = alle)
+  uint8_t sensor_module_id;  // Which sensor module to poll (0 = all, 1 = this module)
 };
-// Størrelse: 1 byte ✓
+// Size: 1 byte ✓
 
-// Sensor sender denne struct til hub (maks 32 bytes)
+// Sensor sends this struct as payload to hub in response to PollRequest:
 struct __attribute__((packed)) SensorPayload {
   uint8_t  sensor_module_id; // Fast ID for sensormodulet (sæt til 1)
   float    temperature;      // Celsius, fx 21.5
@@ -32,20 +32,20 @@ struct __attribute__((packed)) SensorPayload {
   uint8_t  soil[4];          // Jordfugtighed plante 0-3, 0–100%
   uint32_t timestamp;        // Sekunder siden boot
 };
-// Størrelse: 1+4+4+2+4+4 = 19 bytes ✓
+// Size: 1+4+4+2+4+4 = 19 bytes ✓
 
-// Hub sender denne struct til vandingsmodul
+// Hub sends this struct to the watering module to control the pumps:
 struct __attribute__((packed)) WateringCommand {
-  uint8_t  plant_id;         // 0–3 hvilken plante
+  uint8_t  plant_id;         // 0–3 which plant to water
   uint8_t  action;           // 0=stop, 1=start, 2=pulse
-  uint8_t  duration_sec;     // Sekunder pumpen kører
-  uint8_t  pump_pwm;         // PWM-styrke 0–255 (100 = fuld styrke)
+  uint8_t  duration_sec;     // Seconds to run the pump for
+  uint8_t  pump_pwm;         // PWM-setpoint 0–255 (100 = fuld blast)
 };
-// Størrelse: 4 bytes ✓
+// Size: 4 bytes ✓
 
-// Hub sender denne struct til relæmodul
+// Hub sends this struct to the relay module:
 struct __attribute__((packed)) RelayCommand {
-  uint8_t  action;           // 0=sluk, 1=tænd
-  uint16_t duration_min;     // 0=manuelt, >0=auto-sluk efter N minutter
+  uint8_t  action;           // 0=off, 1=on
+  uint16_t duration_min;     // 0=manual, >0=auto-off after N minutes
 };
-// Størrelse: 3 bytes ✓
+// Size: 3 bytes ✓

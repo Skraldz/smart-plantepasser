@@ -92,16 +92,16 @@ void executeRelayCommand(RelayCommand cmd) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Starter Relæmodul...");
+  Serial.println("Starting Relay module...");
 
-  // Relæ-pin — sørg for at relæet er slukket ved opstart
+  // Relay-pin: make sure relay is in off-state at startup
   pinMode(RELAY_PIN, OUTPUT);
 #if RELAY_ACTIVE_LOW
-  digitalWrite(RELAY_PIN, HIGH); // HIGH = slukket ved aktiv-LOW
+  digitalWrite(RELAY_PIN, HIGH); // HIGH = off-state for active-LOW relay
 #else
-  digitalWrite(RELAY_PIN, LOW);  // LOW = slukket ved aktiv-HIGH
+  digitalWrite(RELAY_PIN, LOW);  // LOW = off-state for active-HIGH relay
 #endif
-  Serial.println("Relæ-pin initialiseret (slukket)");
+  Serial.println("Relay-pin initialized (relay off)");
 
   // NRF24L01
   if (!radio.begin()) {

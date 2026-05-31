@@ -39,10 +39,6 @@ unsigned long lastSettingsPoll = 0;
 const unsigned long SENSOR_POLL_INTERVAL  = 300000;
 const unsigned long COMMAND_POLL_INTERVAL = 10000;
 const unsigned long SETTINGS_POLL_INTERVAL = 10000;
-const char* root_ca = \
-"-----BEGIN CERTIFICATE-----\n" \
-"8b9cb923e7f6be2bfea52b233a831fa5d86654c8d14579a2c4cde23fa5e28120\n" \
-"-----END CERTIFICATE-----\n";
 
 bool sdReady          = false;
 bool relayCurrentlyOn = false;
@@ -148,7 +144,7 @@ void fetchSettings() {
     return;
   }
   WiFiClientSecure client;
-  client.setCACert(root_ca);
+  client.setInsecure();
   HTTPClient http;
   http.begin(client, SETTINGS_URL);
   http.addHeader("X-Device-Secret", DEVICE_SECRET);
@@ -234,7 +230,7 @@ bool sendJsonToBackend(String body) {
     return false;
   }
   WiFiClientSecure client;
-  client.setCACert(root_ca);
+  client.setInsecure();
   HTTPClient http;
   http.begin(client, BACKEND_URL);
   http.addHeader("Content-Type", "application/json");
@@ -357,7 +353,7 @@ void updateRelayState(uint8_t state) {
   if (WiFi.status() != WL_CONNECTED) return;
 
   WiFiClientSecure client;
-  client.setCACert(root_ca);
+  client.setInsecure();
 
   HTTPClient http;
   String url = String(SETTINGS_URL_BASE) + "/relay_state?relay_action=" + String(state);
@@ -431,7 +427,7 @@ void pollSensor() {
 void getPendingCommands() {
   if (WiFi.status() != WL_CONNECTED) { Serial.println("WiFi offline - kan ikke hente commands"); return; }
   WiFiClientSecure client;
-  client.setCACert(root_ca);
+  client.setInsecure();
   HTTPClient http;
   http.begin(client, COMMANDS_URL);
   http.addHeader("X-Device-Secret", DEVICE_SECRET);

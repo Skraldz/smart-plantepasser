@@ -37,12 +37,17 @@ export async function getMeasurements(
   return response.data;
 }
 
-// Function to send a watering command for a specific plant, including the plant index and duration of watering in seconds,
-// making a POST request to the corresponding API endpoint and returning the response data.
-export async function sendWaterCommand(plantIdx, durationSec = 5) {
+// Function to send a watering command for a specific plant.
+// Sends plant index, watering duration in seconds, and pump PWM strength.
+export async function sendWaterCommand(
+  plantIdx,
+  durationSec = 5,
+  pumpPwm = 100
+) {
   const response = await client.post('/api/v1/commands/water', {
     plant_idx: plantIdx,
     duration_sec: durationSec,
+    pump_pwm: pumpPwm,
   });
 
   return response.data;

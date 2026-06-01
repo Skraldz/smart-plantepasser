@@ -140,16 +140,30 @@ const lampStatus =
     loadLightSettings();
   }, []);
 
-// Handler for triggering a watering cycle for the selected plant. 
-// It sends a water command to the backend and refreshes plant data to reflect the new status.
-  async function handleWateringCycle() {
+// Handler for triggering a watering cycle for the selected plant.
+// It sends a water command to the backend using the selected plant's watering settings.
+async function handleWateringCycle() {
   try {
     if (!selectedWaterPlantIdx) {
       showToast('Choose a plant to water first.', 'warning');
       return;
     }
 
-    await sendWaterCommand(Number(selectedWaterPlantIdx), 5);
+    const selectedPlant = plants.find(
+      (plant) => plant.plant_idx === Number(selectedWaterPlantIdx)
+    );
+
+    if (!selectedPlant) {
+      showToast('Selected plant could not be found.', 'error');
+      return;
+    }
+
+    await sendWaterCommand(
+      selectedPlant.plant_idx,
+      selectedPlant.watering_duration_sec ?? 5,
+      selectedPlant.pump_pwm ?? 100
+    );
+
     await refreshPlants();
 
     showToast(
@@ -161,6 +175,7 @@ const lampStatus =
     showToast('Failed to send watering command.', 'error');
   }
 }
+
 // Handler for toggling the growth lamp on or off. 
 // It sends a relay command to the backend and refreshes plant data to reflect the new status.
   async function handleToggleLamp() {
